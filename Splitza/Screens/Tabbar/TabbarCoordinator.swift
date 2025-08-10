@@ -49,7 +49,8 @@ final class TabbarCoordinator: Coordinator {
 	}
 	
 	private func setupHistoryViewController() {
-		let localHistoryViewController = HistoryViewController()
+		let localHistoryViewModel = HistoryViewModel()
+		let localHistoryViewController = HistoryViewController(viewModel: localHistoryViewModel)
 		historyViewController = UINavigationController(rootViewController: localHistoryViewController)
 		
 		historyViewController.tabBarItem = UITabBarItem(
