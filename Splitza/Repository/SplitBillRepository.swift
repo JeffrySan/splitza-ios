@@ -6,18 +6,18 @@
 //
 
 import Foundation
-import Combine
+import RxSwift
 
 // MARK: - Data Source Protocol
 
 protocol SplitBillDataSource {
-	func getAllSplitBills() -> AnyPublisher<[SplitBill], Error>
-	func getSplitBill(id: String) -> AnyPublisher<SplitBill, Error>
-	func searchSplitBills(query: String) -> AnyPublisher<[SplitBill], Error>
-	func createSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error>
-	func updateSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error>
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, Error>
-	func settleSplitBill(id: String) -> AnyPublisher<SplitBill, Error>
+	func getAllSplitBills() -> Observable<[SplitBill]>
+	func getSplitBill(id: String) -> Observable<SplitBill>
+	func searchSplitBills(query: String) -> Observable<[SplitBill]>
+	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill>
+	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill>
+	func deleteSplitBill(id: String) -> Observable<Void>
+	func settleSplitBill(id: String) -> Observable<SplitBill>
 }
 
 // MARK: - Repository Error
@@ -55,7 +55,7 @@ final class SplitBillRepository {
 	private let localDataSource: SplitBillDataSource
 	private let remoteDataSource: SplitBillDataSource
 	private let dataSourceType: DataSourceType
-	private var cancellables = Set<AnyCancellable>()
+	private let disposeBag = DisposeBag()
 	
 	init(
 		localDataSource: SplitBillDataSource = LocalSplitBillDataSource(),
@@ -69,7 +69,7 @@ final class SplitBillRepository {
 	
 	// MARK: - Public Methods
 	
-	func getAllSplitBills() -> AnyPublisher<[SplitBill], Error> {
+	func getAllSplitBills() -> Observable<[SplitBill]> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.getAllSplitBills()
@@ -79,20 +79,19 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.getAllSplitBills()
-				.flatMap { [weak self] localBills -> AnyPublisher<[SplitBill], Error> in
+				.flatMap { [weak self] localBills -> Observable<[SplitBill]> in
 					guard let self = self else {
-						return Just(localBills).setFailureType(to: Error.self).eraseToAnyPublisher()
+						return Observable.just(localBills)
 					}
 					
 					// Return local data immediately, sync in background
 					self.syncWithRemote()
-					return Just(localBills).setFailureType(to: Error.self).eraseToAnyPublisher()
+					return Observable.just(localBills)
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
-	func getSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func getSplitBill(id: String) -> Observable<SplitBill> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.getSplitBill(id: id)
@@ -102,17 +101,16 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.getSplitBill(id: id)
-				.catch { [weak self] _ -> AnyPublisher<SplitBill, Error> in
+				.catch { [weak self] _ -> Observable<SplitBill> in
 					guard let self = self else {
-						return Fail(error: SplitBillRepositoryError.splitBillNotFound).eraseToAnyPublisher()
+						return Observable.error(SplitBillRepositoryError.splitBillNotFound)
 					}
 					return self.remoteDataSource.getSplitBill(id: id)
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
-	func searchSplitBills(query: String) -> AnyPublisher<[SplitBill], Error> {
+	func searchSplitBills(query: String) -> Observable<[SplitBill]> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.searchSplitBills(query: query)
@@ -125,7 +123,7 @@ final class SplitBillRepository {
 		}
 	}
 	
-	func createSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.createSplitBill(splitBill)
@@ -135,24 +133,22 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.createSplitBill(splitBill)
-				.flatMap { [weak self] localBill -> AnyPublisher<SplitBill, Error> in
+				.flatMap { [weak self] localBill -> Observable<SplitBill> in
 					guard let self = self else {
-						return Just(localBill).setFailureType(to: Error.self).eraseToAnyPublisher()
+						return Observable.just(localBill)
 					}
 					
 					// Save locally first, then sync to remote
 					return self.remoteDataSource.createSplitBill(splitBill)
 						.catch { _ in
 							// If remote fails, still return local success
-							Just(localBill).setFailureType(to: Error.self)
+							Observable.just(localBill)
 						}
-						.eraseToAnyPublisher()
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
-	func updateSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.updateSplitBill(splitBill)
@@ -162,22 +158,20 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.updateSplitBill(splitBill)
-				.flatMap { [weak self] localBill -> AnyPublisher<SplitBill, Error> in
+				.flatMap { [weak self] localBill -> Observable<SplitBill> in
 					guard let self = self else {
-						return Just(localBill).setFailureType(to: Error.self).eraseToAnyPublisher()
+						return Observable.just(localBill)
 					}
 					
 					return self.remoteDataSource.updateSplitBill(splitBill)
 						.catch { _ in
-							Just(localBill).setFailureType(to: Error.self)
+							Observable.just(localBill)
 						}
-						.eraseToAnyPublisher()
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, Error> {
+	func deleteSplitBill(id: String) -> Observable<Void> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.deleteSplitBill(id: id)
@@ -187,22 +181,20 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.deleteSplitBill(id: id)
-				.flatMap { [weak self] _ -> AnyPublisher<Void, Error> in
+				.flatMap { [weak self] _ -> Observable<Void> in
 					guard let self = self else {
-						return Just(()).setFailureType(to: Error.self).eraseToAnyPublisher()
+						return Observable.just(())
 					}
 					
 					return self.remoteDataSource.deleteSplitBill(id: id)
 						.catch { _ in
-							Just(()).setFailureType(to: Error.self)
+							Observable.just(())
 						}
-						.eraseToAnyPublisher()
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
-	func settleSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func settleSplitBill(id: String) -> Observable<SplitBill> {
 		switch dataSourceType {
 		case .local:
 			return localDataSource.settleSplitBill(id: id)
@@ -212,18 +204,16 @@ final class SplitBillRepository {
 			
 		case .hybrid:
 			return localDataSource.settleSplitBill(id: id)
-				.flatMap { [weak self] localBill -> AnyPublisher<SplitBill, Error> in
+				.flatMap { [weak self] localBill -> Observable<SplitBill> in
 					guard let self = self else {
-						return Just(localBill).setFailureType(to: Error.self).eraseToAnyPublisher()
+						return Observable.just(localBill)
 					}
 					
 					return self.remoteDataSource.settleSplitBill(id: id)
 						.catch { _ in
-							Just(localBill).setFailureType(to: Error.self)
+							Observable.just(localBill)
 						}
-						.eraseToAnyPublisher()
 				}
-				.eraseToAnyPublisher()
 		}
 	}
 	
@@ -242,18 +232,16 @@ final class SplitBillRepository {
 	private func syncWithRemote() {
 		// Background sync - don't block the main flow
 		remoteDataSource.getAllSplitBills()
-			.sink(
-				receiveCompletion: { completion in
-					if case .failure(let error) = completion {
-						print("Background sync failed: \(error)")
-					}
-				},
-				receiveValue: { remoteBills in
+			.subscribe(
+				onNext: { remoteBills in
 					// Here you would implement sophisticated sync logic
 					// For now, we'll just log that sync happened
 					print("Background sync completed with \(remoteBills.count) bills")
+				},
+				onError: { error in
+					print("Background sync failed: \(error)")
 				}
 			)
-			.store(in: &cancellables)
+			.disposed(by: disposeBag)
 	}
 }

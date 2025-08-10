@@ -5,7 +5,7 @@
 //  Created by Jeffry Sandy Purnomo on 10/08/25.
 //
 
-import Combine
+import RxSwift
 
 final class RemoteSplitBillDataSource: SplitBillDataSource {
 	
@@ -15,65 +15,51 @@ final class RemoteSplitBillDataSource: SplitBillDataSource {
 		self.apiService = apiService
 	}
 	
-	func getAllSplitBills() -> AnyPublisher<[SplitBill], Error> {
+	func getAllSplitBills() -> Observable<[SplitBill]> {
 		return apiService.getAllSplitBills(page: 1, limit: 100, sortBy: "date", sortOrder: "desc")
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func getSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func getSplitBill(id: String) -> Observable<SplitBill> {
 		return apiService.getSplitBill(id: id)
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func searchSplitBills(query: String) -> AnyPublisher<[SplitBill], Error> {
+	func searchSplitBills(query: String) -> Observable<[SplitBill]> {
 		return apiService.searchSplitBills(query: query, page: 1, limit: 100)
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func createSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		let request = splitBill.toCreateRequest()
 		return apiService.createSplitBill(request)
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func updateSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		let request = splitBill.toUpdateRequest()
 		return apiService.updateSplitBill(id: splitBill.id, request: request)
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, Error> {
+	func deleteSplitBill(id: String) -> Observable<Void> {
 		return apiService.deleteSplitBill(id: id)
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 	
-	func settleSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func settleSplitBill(id: String) -> Observable<SplitBill> {
 		return apiService.settleSplitBill(id: id)
 			.map { response in
 				response.data
 			}
-			.mapError { $0 as Error }
-			.eraseToAnyPublisher()
 	}
 }

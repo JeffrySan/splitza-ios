@@ -6,7 +6,8 @@
 //
 
 import Foundation
-import Combine
+import RxSwift
+import RxRelay
 
 // MARK: - HistoryViewModelDelegate
 
@@ -27,27 +28,27 @@ enum HistoryViewState {
 
 // MARK: - HistoryViewModel
 
-final class HistoryViewModel: ObservableObject {
+final class HistoryViewModel {
 	
-	// MARK: - Published Properties
+	// MARK: - Reactive Properties
 	
-	@Published private(set) var splitBills: [SplitBill] = []
-	@Published private(set) var filteredSplitBills: [SplitBill] = []
-	@Published private(set) var isSearching = false
-	@Published private(set) var searchQuery = ""
-	@Published private(set) var viewState: HistoryViewState = .loading
+	private let splitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
+	private let filteredSplitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
+	private let isSearchingRelay = BehaviorRelay<Bool>(value: false)
+	private let searchQueryRelay = BehaviorRelay<String>(value: "")
+	private let viewStateRelay = BehaviorRelay<HistoryViewState>(value: .loading)
 	
 	// MARK: - Private Properties
 	
 	private let repository: SplitBillRepository
-	private var cancellables = Set<AnyCancellable>()
+	private let disposeBag = DisposeBag()
 	
 	// MARK: - Delegate
 	
 	weak var delegate: HistoryViewModelDelegate?	// MARK: - Computed Properties
 	
 	var currentDataSource: [SplitBill] {
-		return isSearching ? filteredSplitBills : splitBills
+		return isSearchingRelay.value ? filteredSplitBillsRelay.value : splitBillsRelay.value
 	}
 	
 	var numberOfItems: Int {
@@ -59,7 +60,7 @@ final class HistoryViewModel: ObservableObject {
 	}
 	
 	var emptyStateInfo: (title: String, subtitle: String, imageName: String) {
-		if isSearching && isEmpty {
+		if isSearchingRelay.value && isEmpty {
 			return (
 				title: "No matching bills found",
 				subtitle: "Try adjusting your search terms",
@@ -87,76 +88,65 @@ final class HistoryViewModel: ObservableObject {
 	
 	private func setupBindings() {
 		// Observe search query changes and perform debounced search
-		$searchQuery
-			.debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-			.removeDuplicates()
-			.sink { [weak self] query in
+		searchQueryRelay
+			.debounce(.milliseconds(300), scheduler: MainScheduler.instance)
+			.distinctUntilChanged()
+			.subscribe(onNext: { [weak self] query in
 				self?.performSearch(query: query)
-			}
-			.store(in: &cancellables)
+			})
+			.disposed(by: disposeBag)
 	}
 	
 	// MARK: - Public Methods
 	
 	func loadData() {
-		viewState = .loading
+		viewStateRelay.accept(.loading)
 		
 		// Load sample data for demo (this will be removed when using real API)
 		SplitBillManager.shared.loadSampleData()
 		
 		repository.getAllSplitBills()
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.viewState = .error(error)
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] bills in
+					self?.splitBillsRelay.accept(bills)
+					self?.updateFilteredBills(bills)
+					self?.viewStateRelay.accept(.loaded)
+					self?.delegate?.historyViewModelDidUpdateData(self!)
 				},
-				receiveValue: { [weak self] bills in
-					self?.splitBills = bills
-					self?.filteredSplitBills = bills
-					self?.updateViewState()
-					self?.notifyDelegate()
+				onError: { [weak self] error in
+					self?.viewStateRelay.accept(.error(error))
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
+			.disposed(by: disposeBag)
 	}
-	
 	func refreshData() {
 		repository.getAllSplitBills()
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] bills in
+					self?.splitBillsRelay.accept(bills)
+					self?.updateFilteredBills(bills)
+					self?.delegate?.historyViewModelDidUpdateData(self!)
 				},
-				receiveValue: { [weak self] bills in
-					self?.splitBills = bills
-					
-					if self?.isSearching == true {
-						self?.performSearch(query: self?.searchQuery ?? "")
-					} else {
-						self?.filteredSplitBills = bills
-					}
-					
-					self?.updateViewState()
-					self?.notifyDelegate()
+				onError: { [weak self] error in
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
-	}	func updateSearchQuery(_ query: String) {
+			.disposed(by: disposeBag)
+	}
+	
+	func updateSearchQuery(_ query: String) {
 		let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-		searchQuery = trimmedQuery
+		searchQueryRelay.accept(trimmedQuery)
 	}
 	
 	func clearSearch() {
-		searchQuery = ""
-		isSearching = false
-		filteredSplitBills = splitBills
-		updateViewState()
-		notifyDelegate()
+		searchQueryRelay.accept("")
+		isSearchingRelay.accept(false)
+		filteredSplitBillsRelay.accept(splitBillsRelay.value)
+		delegate?.historyViewModelDidUpdateData(self)
 	}
 	
 	func splitBill(at index: Int) -> SplitBill? {
@@ -170,61 +160,59 @@ final class HistoryViewModel: ObservableObject {
 		let splitBill = currentDataSource[index]
 		
 		repository.deleteSplitBill(id: splitBill.id)
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
-				},
-				receiveValue: { [weak self] _ in
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] _ in
 					// Remove from local arrays
-					if let originalIndex = self?.splitBills.firstIndex(where: { $0.id == splitBill.id }) {
-						self?.splitBills.remove(at: originalIndex)
+					var currentBills = self?.splitBillsRelay.value ?? []
+					if let originalIndex = currentBills.firstIndex(where: { $0.id == splitBill.id }) {
+						currentBills.remove(at: originalIndex)
+						self?.splitBillsRelay.accept(currentBills)
 					}
 					
-					if self?.isSearching == true,
-					   let filteredIndex = self?.filteredSplitBills.firstIndex(where: { $0.id == splitBill.id }) {
-						self?.filteredSplitBills.remove(at: filteredIndex)
+					if self?.isSearchingRelay.value == true {
+						var currentFilteredBills = self?.filteredSplitBillsRelay.value ?? []
+						if let filteredIndex = currentFilteredBills.firstIndex(where: { $0.id == splitBill.id }) {
+							currentFilteredBills.remove(at: filteredIndex)
+							self?.filteredSplitBillsRelay.accept(currentFilteredBills)
+						}
 					}
 					
-					self?.updateViewState()
-					self?.notifyDelegate()
+					self?.delegate?.historyViewModelDidUpdateData(self!)
+				},
+				onError: { [weak self] error in
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
+			.disposed(by: disposeBag)
 	}
 	
 	func addSplitBill(_ splitBill: SplitBill) {
 		repository.createSplitBill(splitBill)
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
-				},
-				receiveValue: { [weak self] _ in
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] _ in
 					self?.refreshData()
+				},
+				onError: { [weak self] error in
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
+			.disposed(by: disposeBag)
 	}
 	
 	func updateSplitBill(_ splitBill: SplitBill) {
 		repository.updateSplitBill(splitBill)
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
-				},
-				receiveValue: { [weak self] _ in
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] _ in
 					self?.refreshData()
+				},
+				onError: { [weak self] error in
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
+			.disposed(by: disposeBag)
 	}
 	
 	func settleSplitBill(at index: Int) {
@@ -233,85 +221,66 @@ final class HistoryViewModel: ObservableObject {
 		let splitBill = currentDataSource[index]
 		
 		repository.settleSplitBill(id: splitBill.id)
-			.receive(on: DispatchQueue.main)
-			.sink(
-				receiveCompletion: { [weak self] completion in
-					if case .failure(let error) = completion {
-						self?.delegate?.historyViewModel(self!, didEncounterError: error)
-					}
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] _ in
+					self?.refreshData()
 				},
-				receiveValue: { [weak self] settledBill in
-					// Update local arrays with settled bill
-					if let originalIndex = self?.splitBills.firstIndex(where: { $0.id == settledBill.id }) {
-						self?.splitBills[originalIndex] = settledBill
-					}
-					
-					if self?.isSearching == true,
-					   let filteredIndex = self?.filteredSplitBills.firstIndex(where: { $0.id == settledBill.id }) {
-						self?.filteredSplitBills[filteredIndex] = settledBill
-					}
-					
-					self?.updateViewState()
-					self?.notifyDelegate()
+				onError: { [weak self] error in
+					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
-			.store(in: &cancellables)
-	}	// MARK: - Private Methods
+			.disposed(by: disposeBag)
+	}
+	
+	// MARK: - Private Methods
 	
 	private func performSearch(query: String) {
 		let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
 		
 		if trimmedQuery.isEmpty {
-			isSearching = false
-			filteredSplitBills = splitBills
+			isSearchingRelay.accept(false)
+			filteredSplitBillsRelay.accept(splitBillsRelay.value)
 		} else {
-			isSearching = true
+			isSearchingRelay.accept(true)
 			
 			repository.searchSplitBills(query: trimmedQuery)
-				.receive(on: DispatchQueue.main)
-				.sink(
-					receiveCompletion: { [weak self] completion in
-						if case .failure(let error) = completion {
-							// Fallback to local search if remote search fails
-							self?.performLocalSearch(query: trimmedQuery)
-						}
+				.observe(on: MainScheduler.instance)
+				.subscribe(
+					onNext: { [weak self] searchResults in
+						self?.filteredSplitBillsRelay.accept(searchResults)
+						self?.delegate?.historyViewModelDidUpdateData(self!)
 					},
-					receiveValue: { [weak self] searchResults in
-						self?.filteredSplitBills = searchResults
-						self?.updateViewState()
-						self?.notifyDelegate()
+					onError: { [weak self] error in
+						// Fallback to local search if remote search fails
+						self?.performLocalSearch(query: trimmedQuery)
 					}
 				)
-				.store(in: &cancellables)
+				.disposed(by: disposeBag)
 		}
 		
-		updateViewState()
-		notifyDelegate()
+		delegate?.historyViewModelDidUpdateData(self)
 	}
 	
 	private func performLocalSearch(query: String) {
 		let lowercasedQuery = query.lowercased()
-		filteredSplitBills = splitBills.filter { splitBill in
+		let filtered = splitBillsRelay.value.filter { splitBill in
 			splitBill.title.lowercased().contains(lowercasedQuery) ||
 			splitBill.location?.lowercased().contains(lowercasedQuery) == true ||
 			splitBill.description?.lowercased().contains(lowercasedQuery) == true ||
 			splitBill.participants.contains { $0.name.lowercased().contains(lowercasedQuery) }
 		}.sorted { $0.date > $1.date }
 		
-		updateViewState()
-		notifyDelegate()
-	}	private func updateViewState() {
-		if splitBills.isEmpty && !isSearching {
-			viewState = .empty
-		} else if filteredSplitBills.isEmpty && isSearching {
-			viewState = .searchEmpty
-		} else {
-			viewState = .loaded
-		}
+		filteredSplitBillsRelay.accept(filtered)
+		delegate?.historyViewModelDidUpdateData(self)
 	}
 	
-	private func notifyDelegate() {
-		delegate?.historyViewModelDidUpdateData(self)
+	private func updateFilteredBills(_ bills: [SplitBill]) {
+		if isSearchingRelay.value {
+			performSearch(query: searchQueryRelay.value)
+		} else {
+			filteredSplitBillsRelay.accept(bills)
+		}
 	}
 }
 
@@ -320,31 +289,31 @@ final class HistoryViewModel: ObservableObject {
 extension HistoryViewModel {
 	
 	var totalBillsCount: Int {
-		return splitBills.count
+		return splitBillsRelay.value.count
 	}
 	
 	var settledBillsCount: Int {
-		return splitBills.filter { $0.isSettled }.count
+		return splitBillsRelay.value.filter { $0.isSettled }.count
 	}
 	
 	var pendingBillsCount: Int {
-		return splitBills.filter { !$0.isSettled }.count
+		return splitBillsRelay.value.filter { !$0.isSettled }.count
 	}
 	
 	var totalAmountOwed: Double {
-		return splitBills.reduce(0) { total, bill in
+		return splitBillsRelay.value.reduce(0) { total, bill in
 			total + bill.totalAmount
 		}
 	}
 	
 	var settledAmount: Double {
-		return splitBills.filter { $0.isSettled }.reduce(0) { total, bill in
+		return splitBillsRelay.value.filter { $0.isSettled }.reduce(0) { total, bill in
 			total + bill.totalAmount
 		}
 	}
 	
 	var pendingAmount: Double {
-		return splitBills.filter { !$0.isSettled }.reduce(0) { total, bill in
+		return splitBillsRelay.value.filter { !$0.isSettled }.reduce(0) { total, bill in
 			total + bill.totalAmount
 		}
 	}

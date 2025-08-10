@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Combine
+import RxSwift
 
 // MARK: - API Response Models
 
@@ -186,62 +186,61 @@ extension SplitBillAPIRequest: NetworkRequest {
 // MARK: - Split Bill API Service
 
 protocol SplitBillAPIServiceProtocol {
-	func getAllSplitBills(page: Int, limit: Int, sortBy: String?, sortOrder: String?) -> AnyPublisher<SplitBillResponse, NetworkError>
-	func getSplitBill(id: String) -> AnyPublisher<SingleSplitBillResponse, NetworkError>
-	func searchSplitBills(query: String, page: Int, limit: Int) -> AnyPublisher<SplitBillResponse, NetworkError>
-	func createSplitBill(_ request: CreateSplitBillRequest) -> AnyPublisher<SingleSplitBillResponse, NetworkError>
-	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> AnyPublisher<SingleSplitBillResponse, NetworkError>
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, NetworkError>
-	func settleSplitBill(id: String) -> AnyPublisher<SingleSplitBillResponse, NetworkError>
-	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> AnyPublisher<SingleSplitBillResponse, NetworkError>
+	func getAllSplitBills(page: Int, limit: Int, sortBy: String?, sortOrder: String?) -> Observable<SplitBillResponse>
+	func getSplitBill(id: String) -> Observable<SingleSplitBillResponse>
+	func searchSplitBills(query: String, page: Int, limit: Int) -> Observable<SplitBillResponse>
+	func createSplitBill(_ request: CreateSplitBillRequest) -> Observable<SingleSplitBillResponse>
+	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> Observable<SingleSplitBillResponse>
+	func deleteSplitBill(id: String) -> Observable<Void>
+	func settleSplitBill(id: String) -> Observable<SingleSplitBillResponse>
+	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> Observable<SingleSplitBillResponse>
 }
 
 final class SplitBillAPIService: SplitBillAPIServiceProtocol {
 	
 	private let networkManager: NetworkManager
 	
-	init(networkManager: NetworkManager = NetworkManager.shared) {
+	init(networkManager: NetworkManager = NetworkManager()) {
 		self.networkManager = networkManager
 	}
 	
-	func getAllSplitBills(page: Int = 1, limit: Int = 20, sortBy: String? = "date", sortOrder: String? = "desc") -> AnyPublisher<SplitBillResponse, NetworkError> {
+	func getAllSplitBills(page: Int = 1, limit: Int = 20, sortBy: String? = "date", sortOrder: String? = "desc") -> Observable<SplitBillResponse> {
 		let request = SplitBillAPIRequest.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
 		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
 	}
 	
-	func getSplitBill(id: String) -> AnyPublisher<SingleSplitBillResponse, NetworkError> {
+	func getSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillAPIRequest.getSplitBill(id: id)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}
 	
-	func searchSplitBills(query: String, page: Int = 1, limit: Int = 20) -> AnyPublisher<SplitBillResponse, NetworkError> {
+	func searchSplitBills(query: String, page: Int = 1, limit: Int = 20) -> Observable<SplitBillResponse> {
 		let request = SplitBillAPIRequest.searchSplitBills(query: query, page: page, limit: limit)
 		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
 	}
 	
-	func createSplitBill(_ request: CreateSplitBillRequest) -> AnyPublisher<SingleSplitBillResponse, NetworkError> {
+	func createSplitBill(_ request: CreateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
 		let apiRequest = SplitBillAPIRequest.createSplitBill(request)
 		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
 	}
 	
-	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> AnyPublisher<SingleSplitBillResponse, NetworkError> {
+	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
 		let apiRequest = SplitBillAPIRequest.updateSplitBill(id: id, request)
 		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
 	}
 	
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, NetworkError> {
+	func deleteSplitBill(id: String) -> Observable<Void> {
 		let request = SplitBillAPIRequest.deleteSplitBill(id: id)
 		return networkManager.execute(request: request)
 			.map { _ in () }
-			.eraseToAnyPublisher()
 	}
 	
-	func settleSplitBill(id: String) -> AnyPublisher<SingleSplitBillResponse, NetworkError> {
+	func settleSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillAPIRequest.settleSplitBill(id: id)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}
 	
-	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> AnyPublisher<SingleSplitBillResponse, NetworkError> {
+	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillAPIRequest.markParticipantPaid(billId: billId, participantId: participantId, paid: paid)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}

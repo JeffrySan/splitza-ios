@@ -6,70 +6,10 @@
 //
 
 import Foundation
-import Combine
-
-// MARK: - NetworkError
-
-enum NetworkError: LocalizedError, Equatable {
-	case invalidURL
-	case noData
-	case decodingError
-	case serverError(Int)
-	case networkUnavailable
-	case timeout
-	case unauthorized
-	case forbidden
-	case notFound
-	case unknown(Error)
-	
-	var errorDescription: String? {
-		switch self {
-		case .invalidURL:
-			return "Invalid URL"
-		case .noData:
-			return "No data received"
-		case .decodingError:
-			return "Failed to decode response"
-		case .serverError(let code):
-			return "Server error with code: \(code)"
-		case .networkUnavailable:
-			return "Network unavailable"
-		case .timeout:
-			return "Request timeout"
-		case .unauthorized:
-			return "Unauthorized access"
-		case .forbidden:
-			return "Access forbidden"
-		case .notFound:
-			return "Resource not found"
-		case .unknown(let error):
-			return "Unknown error: \(error.localizedDescription)"
-		}
-	}
-	
-	static func == (lhs: NetworkError, rhs: NetworkError) -> Bool {
-		switch (lhs, rhs) {
-		case (.invalidURL, .invalidURL),
-			(.noData, .noData),
-			(.decodingError, .decodingError),
-			(.networkUnavailable, .networkUnavailable),
-			(.timeout, .timeout),
-			(.unauthorized, .unauthorized),
-			(.forbidden, .forbidden),
-			(.notFound, .notFound):
-			return true
-		case (.serverError(let lhsCode), .serverError(let rhsCode)):
-			return lhsCode == rhsCode
-		case (.unknown(let lhsError), .unknown(let rhsError)):
-			return lhsError.localizedDescription == rhsError.localizedDescription
-		default:
-			return false
-		}
-	}
-}
+import RxSwift
+import RxCocoa
 
 // MARK: - HTTPMethod
-
 enum HTTPMethod: String {
 	case GET = "GET"
 	case POST = "POST"
@@ -78,47 +18,9 @@ enum HTTPMethod: String {
 	case PATCH = "PATCH"
 }
 
-// MARK: - NetworkRequest
-
-protocol NetworkRequest {
-	var baseURL: String { get }
-	var path: String { get }
-	var method: HTTPMethod { get }
-	var headers: [String: String]? { get }
-	var parameters: [String: Any]? { get }
-	var body: Data? { get }
-	var timeoutInterval: TimeInterval { get }
-}
-
-extension NetworkRequest {
-	var baseURL: String {
-		return "https://api.splitza.com" // Replace with your actual API base URL
-	}
-	
-	var headers: [String: String]? {
-		return [
-			"Content-Type": "application/json",
-			"Accept": "application/json"
-		]
-	}
-	
-	var parameters: [String: Any]? {
-		return nil
-	}
-	
-	var body: Data? {
-		return nil
-	}
-	
-	var timeoutInterval: TimeInterval {
-		return 30.0
-	}
-}
-
 // MARK: - NetworkManager
 
 final class NetworkManager {
-	static let shared = NetworkManager()
 	
 	private let session: URLSession
 	private let decoder: JSONDecoder
@@ -148,40 +50,38 @@ final class NetworkManager {
 	func execute<T: Codable>(
 		request: NetworkRequest,
 		responseType: T.Type
-	) -> AnyPublisher<T, NetworkError> {
+	) -> Observable<T> {
 		
 		guard let urlRequest = buildURLRequest(from: request) else {
-			return Fail(error: NetworkError.invalidURL)
-				.eraseToAnyPublisher()
+			return Observable.error(NetworkError.invalidURL)
 		}
 		
-		return session.dataTaskPublisher(for: urlRequest)
-			.tryMap { [weak self] data, response in
+		return session.rx.data(request: urlRequest)
+			.map { [weak self] data, response in
 				try self?.handleResponse(data: data, response: response) ?? data
 			}
-			.decode(type: T.self, decoder: decoder)
-			.mapError { error in
-				self.mapError(error)
+			.map { data in
+				try self.decoder.decode(T.self, from: data)
 			}
-			.receive(on: DispatchQueue.main)
-			.eraseToAnyPublisher()
+			.catch { error in
+				Observable.error(self.mapError(error))
+			}
+			.observe(on: MainScheduler.instance)
 	}
 	
-	func execute(request: NetworkRequest) -> AnyPublisher<Data, NetworkError> {
+	func execute(request: NetworkRequest) -> Observable<Data> {
 		guard let urlRequest = buildURLRequest(from: request) else {
-			return Fail(error: NetworkError.invalidURL)
-				.eraseToAnyPublisher()
+			return Observable.error(NetworkError.invalidURL)
 		}
 		
-		return session.dataTaskPublisher(for: urlRequest)
-			.tryMap { [weak self] data, response in
+		return session.rx.data(request: urlRequest)
+			.map { [weak self] data, response in
 				try self?.handleResponse(data: data, response: response) ?? data
 			}
-			.mapError { error in
-				self.mapError(error)
+			.catch { error in
+				Observable.error(self.mapError(error))
 			}
-			.receive(on: DispatchQueue.main)
-			.eraseToAnyPublisher()
+			.observe(on: MainScheduler.instance)
 	}
 	
 	// MARK: - Private Methods
@@ -280,7 +180,7 @@ extension NetworkManager {
 		parameters: [String: Any]? = nil,
 		headers: [String: String]? = nil,
 		responseType: T.Type
-	) -> AnyPublisher<T, NetworkError> {
+	) -> Observable<T> {
 		
 		let request = GenericNetworkRequest(
 			path: path,
@@ -292,14 +192,19 @@ extension NetworkManager {
 		return execute(request: request, responseType: responseType)
 	}
 	
-	func post<T: Codable>(
+	func post<T: Codable, Body: Encodable>(
 		path: String,
-		body: Encodable? = nil,
+		body: Body? = nil,
 		headers: [String: String]? = nil,
 		responseType: T.Type
-	) -> AnyPublisher<T, NetworkError> {
+	) -> Observable<T> {
 		
-		let bodyData = try? encoder.encode(AnyEncodable(body))
+		let bodyData: Data?
+		if let body = body {
+			bodyData = try? encoder.encode(body)
+		} else {
+			bodyData = nil
+		}
 		
 		let request = GenericNetworkRequest(
 			path: path,
@@ -311,14 +216,19 @@ extension NetworkManager {
 		return execute(request: request, responseType: responseType)
 	}
 	
-	func put<T: Codable>(
+	func put<T: Codable, Body: Encodable>(
 		path: String,
-		body: Encodable? = nil,
+		body: Body? = nil,
 		headers: [String: String]? = nil,
 		responseType: T.Type
-	) -> AnyPublisher<T, NetworkError> {
+	) -> Observable<T> {
 		
-		let bodyData = try? encoder.encode(AnyEncodable(body))
+		let bodyData: Data?
+		if let body = body {
+			bodyData = try? encoder.encode(body)
+		} else {
+			bodyData = nil
+		}
 		
 		let request = GenericNetworkRequest(
 			path: path,
@@ -334,7 +244,7 @@ extension NetworkManager {
 		path: String,
 		headers: [String: String]? = nil,
 		responseType: T.Type
-	) -> AnyPublisher<T, NetworkError> {
+	) -> Observable<T> {
 		
 		let request = GenericNetworkRequest(
 			path: path,
@@ -370,23 +280,5 @@ private struct GenericNetworkRequest: NetworkRequest {
 		self.parameters = parameters
 		self.body = body
 		self.timeoutInterval = timeoutInterval
-	}
-}
-
-// MARK: - AnyEncodable Helper
-
-private struct AnyEncodable: Encodable {
-	private let _encode: (Encoder) throws -> Void
-	
-	init<T: Encodable>(_ wrapped: T?) {
-		if let wrapped = wrapped {
-			_encode = wrapped.encode
-		} else {
-			_encode = { _ in }
-		}
-	}
-	
-	func encode(to encoder: Encoder) throws {
-		try _encode(encoder)
 	}
 }

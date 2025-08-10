@@ -124,16 +124,26 @@ struct NetworkConfiguration {
 // MARK: - Network Monitoring
 
 import Network
+import RxSwift
+import RxRelay
 
-final class NetworkMonitor: ObservableObject {
+final class NetworkMonitor {
 	
 	static let shared = NetworkMonitor()
 	
 	private let monitor = NWPathMonitor()
 	private let queue = DispatchQueue(label: "NetworkMonitor")
 	
-	@Published var isConnected = false
-	@Published var connectionType: ConnectionType = .unknown
+	private let isConnectedRelay = BehaviorRelay<Bool>(value: false)
+	private let connectionTypeRelay = BehaviorRelay<ConnectionType>(value: .unknown)
+	
+	var isConnected: Observable<Bool> {
+		return isConnectedRelay.asObservable()
+	}
+	
+	var connectionType: Observable<ConnectionType> {
+		return connectionTypeRelay.asObservable()
+	}
 	
 	enum ConnectionType {
 		case wifi
@@ -149,7 +159,7 @@ final class NetworkMonitor: ObservableObject {
 	private func startMonitoring() {
 		monitor.pathUpdateHandler = { [weak self] path in
 			DispatchQueue.main.async {
-				self?.isConnected = path.status == .satisfied
+				self?.isConnectedRelay.accept(path.status == .satisfied)
 				self?.updateConnectionType(path)
 			}
 		}
@@ -158,13 +168,13 @@ final class NetworkMonitor: ObservableObject {
 	
 	private func updateConnectionType(_ path: NWPath) {
 		if path.usesInterfaceType(.wifi) {
-			connectionType = .wifi
+			connectionTypeRelay.accept(.wifi)
 		} else if path.usesInterfaceType(.cellular) {
-			connectionType = .cellular
+			connectionTypeRelay.accept(.cellular)
 		} else if path.usesInterfaceType(.wiredEthernet) {
-			connectionType = .ethernet
+			connectionTypeRelay.accept(.ethernet)
 		} else {
-			connectionType = .unknown
+			connectionTypeRelay.accept(.unknown)
 		}
 	}
 	

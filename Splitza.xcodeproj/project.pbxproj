@@ -8,11 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		7C05CA722E1E1A5200F2D1E2 /* RxSwift.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */; };
+		7C749E322E486C7900E0EB32 /* RxCocoa.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */; };
+		7C749E362E48716C00E0EB32 /* RxRelay.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E352E48716B00E0EB32 /* RxRelay.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		7C05CA362E1E15E100F2D1E2 /* Splitza.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Splitza.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxSwift.xcframework; path = Carthage/Build/RxSwift.xcframework; sourceTree = "<group>"; };
+		7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxCocoa.xcframework; path = Carthage/Build/RxCocoa.xcframework; sourceTree = "<group>"; };
+		7C749E352E48716B00E0EB32 /* RxRelay.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxRelay.xcframework; path = Carthage/Build/RxRelay.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -41,7 +45,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C749E362E48716C00E0EB32 /* RxRelay.xcframework in Frameworks */,
 				7C05CA722E1E1A5200F2D1E2 /* RxSwift.xcframework in Frameworks */,
+				7C749E322E486C7900E0EB32 /* RxCocoa.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -68,6 +74,8 @@
 		7C05CA702E1E1A5100F2D1E2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7C749E352E48716B00E0EB32 /* RxRelay.xcframework */,
+				7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */,
 				7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */,
 			);
 			name = Frameworks;

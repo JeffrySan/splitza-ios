@@ -5,6 +5,8 @@
 //  Created by Jeffry Sandy Purnomo on 10/08/25.
 //
 
+import RxSwift
+
 final class LocalSplitBillDataSource: SplitBillDataSource {
 	
 	private let manager: SplitBillManager
@@ -13,60 +15,46 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		self.manager = manager
 	}
 	
-	func getAllSplitBills() -> AnyPublisher<[SplitBill], Error> {
+	func getAllSplitBills() -> Observable<[SplitBill]> {
 		let bills = manager.getAllSplitBills()
-		return Just(bills)
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(bills)
 	}
 	
-	func getSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func getSplitBill(id: String) -> Observable<SplitBill> {
 		let bills = manager.getAllSplitBills()
 		
 		if let bill = bills.first(where: { $0.id == id }) {
-			return Just(bill)
-				.setFailureType(to: Error.self)
-				.eraseToAnyPublisher()
+			return Observable.just(bill)
 		} else {
-			return Fail(error: SplitBillRepositoryError.splitBillNotFound)
-				.eraseToAnyPublisher()
+			return Observable.error(SplitBillRepositoryError.splitBillNotFound)
 		}
 	}
 	
-	func searchSplitBills(query: String) -> AnyPublisher<[SplitBill], Error> {
+	func searchSplitBills(query: String) -> Observable<[SplitBill]> {
 		let bills = manager.searchSplitBills(query: query)
-		return Just(bills)
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(bills)
 	}
 	
-	func createSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		manager.addSplitBill(splitBill)
-		return Just(splitBill)
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(splitBill)
 	}
 	
-	func updateSplitBill(_ splitBill: SplitBill) -> AnyPublisher<SplitBill, Error> {
+	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
 		manager.updateSplitBill(splitBill)
-		return Just(splitBill)
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(splitBill)
 	}
 	
-	func deleteSplitBill(id: String) -> AnyPublisher<Void, Error> {
+	func deleteSplitBill(id: String) -> Observable<Void> {
 		manager.deleteSplitBill(withId: id)
-		return Just(())
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(())
 	}
 	
-	func settleSplitBill(id: String) -> AnyPublisher<SplitBill, Error> {
+	func settleSplitBill(id: String) -> Observable<SplitBill> {
 		let bills = manager.getAllSplitBills()
 		
 		guard var bill = bills.first(where: { $0.id == id }) else {
-			return Fail(error: SplitBillRepositoryError.splitBillNotFound)
-				.eraseToAnyPublisher()
+			return Observable.error(SplitBillRepositoryError.splitBillNotFound)
 		}
 		
 		// Create a new SplitBill with isSettled = true
@@ -92,8 +80,6 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		
 		manager.updateSplitBill(settledBill)
 		
-		return Just(settledBill)
-			.setFailureType(to: Error.self)
-			.eraseToAnyPublisher()
+		return Observable.just(settledBill)
 	}
 }
