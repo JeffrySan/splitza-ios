@@ -63,36 +63,6 @@ extension SplitBillService: NetworkRequest {
 		}
 	}
 	
-	var parameters: [String: Any]? {
-		switch self {
-		case .getAllSplitBills(let page, let limit, let sortBy, let sortOrder):
-			var params: [String: Any] = [
-				"page": page,
-				"limit": limit
-			]
-			if let sortBy = sortBy {
-				params["sortBy"] = sortBy
-			}
-			if let sortOrder = sortOrder {
-				params["sortOrder"] = sortOrder
-			}
-			return params
-			
-		case .searchSplitBills(let query, let page, let limit):
-			return [
-				"query": query,
-				"page": page,
-				"limit": limit
-			]
-			
-		case .markParticipantPaid(_, _, let paid):
-			return ["paid": paid]
-			
-		default:
-			return nil
-		}
-	}
-	
 	var body: Data? {
 		switch self {
 		case .createSplitBill(let request):
@@ -142,44 +112,113 @@ final class SplitBillAPIService: SplitBillAPIServiceable {
 	}
 	
 	func getAllSplitBills(page: Int = 1, limit: Int = 20, sortBy: String? = "date", sortOrder: String? = "desc") -> Observable<SplitBillResponse> {
-		let request = SplitBillService.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
-		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
+		var request = SplitBillService.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
+		
+		// Add parameters directly to the request
+		var params: [String: Any] = [
+			"page": page,
+			"limit": limit
+		]
+		if let sortBy = sortBy {
+			params["sortBy"] = sortBy
+		}
+		if let sortOrder = sortOrder {
+			params["sortOrder"] = sortOrder
+		}
+		
+		return networkManager.get(
+			path: request.path,
+			parameters: params,
+			headers: request.headers,
+			responseType: SplitBillResponse.self
+		)
 	}
 	
 	func getSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillService.getSplitBill(id: id)
-		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
+		
+		return networkManager.get(
+			path: request.path,
+			parameters: nil,
+			headers: request.headers,
+			responseType: SingleSplitBillResponse.self
+		)
 	}
 	
 	func searchSplitBills(query: String, page: Int = 1, limit: Int = 20) -> Observable<SplitBillResponse> {
 		let request = SplitBillService.searchSplitBills(query: query, page: page, limit: limit)
-		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
+		
+		// Add search parameters directly
+		let params: [String: Any] = [
+			"query": query,
+			"page": page,
+			"limit": limit
+		]
+		
+		return networkManager.get(
+			path: request.path,
+			parameters: params,
+			headers: request.headers,
+			responseType: SplitBillResponse.self
+		)
 	}
 	
 	func createSplitBill(_ request: CreateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
 		let apiRequest = SplitBillService.createSplitBill(request)
-		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
+		
+		return networkManager.post(
+			path: apiRequest.path,
+			body: request,
+			headers: apiRequest.headers,
+			responseType: SingleSplitBillResponse.self
+		)
 	}
 	
 	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
 		let apiRequest = SplitBillService.updateSplitBill(id: id, request)
-		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
+		
+		return networkManager.put(
+			path: apiRequest.path,
+			body: request,
+			headers: apiRequest.headers,
+			responseType: SingleSplitBillResponse.self
+		)
 	}
 	
 	func deleteSplitBill(id: String) -> Observable<Void> {
 		let request = SplitBillService.deleteSplitBill(id: id)
-		return networkManager.execute(request: request)
-			.map { _ in () }
+		
+		return networkManager.delete(
+			path: request.path,
+			headers: request.headers,
+			responseType: EmptyResponse.self
+		)
+		.map { _ in () }
 	}
 	
 	func settleSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillService.settleSplitBill(id: id)
-		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
+		
+		return networkManager.put(
+			path: request.path,
+			body: EmptyRequest(),
+			headers: request.headers,
+			responseType: SingleSplitBillResponse.self
+		)
 	}
 	
 	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> Observable<SingleSplitBillResponse> {
 		let request = SplitBillService.markParticipantPaid(billId: billId, participantId: participantId, paid: paid)
-		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
+		
+		// Create request body with paid status
+		let body = ["paid": paid]
+		
+		return networkManager.put(
+			path: request.path,
+			body: body,
+			headers: request.headers,
+			responseType: SingleSplitBillResponse.self
+		)
 	}
 }
 
@@ -203,6 +242,12 @@ final class AuthManager {
 		UserDefaults.standard.removeObject(forKey: "auth_token")
 	}
 }
+
+// MARK: - Helper Structs
+
+struct EmptyRequest: Codable {}
+
+struct EmptyResponse: Codable {}
 
 // MARK: - Convenience Extensions
 
