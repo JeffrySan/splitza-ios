@@ -9,9 +9,9 @@ import RxSwift
 
 final class RemoteSplitBillDataSource: SplitBillDataSource {
 	
-	private let apiService: SplitBillAPIServiceProtocol
+	private let apiService: SplitBillAPIServiceable
 	
-	init(apiService: SplitBillAPIServiceProtocol = SplitBillAPIService()) {
+	init(apiService: SplitBillAPIServiceable = SplitBillAPIService()) {
 		self.apiService = apiService
 	}
 	

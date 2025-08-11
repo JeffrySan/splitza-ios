@@ -8,72 +8,9 @@
 import Foundation
 import RxSwift
 
-// MARK: - API Response Models
-
-struct SplitBillResponse: Codable {
-	let success: Bool
-	let data: [SplitBill]
-	let message: String?
-	let pagination: PaginationInfo?
-}
-
-struct SingleSplitBillResponse: Codable {
-	let success: Bool
-	let data: SplitBill
-	let message: String?
-}
-
-struct PaginationInfo: Codable {
-	let currentPage: Int
-	let totalPages: Int
-	let totalItems: Int
-	let itemsPerPage: Int
-}
-
-struct ErrorResponse: Codable {
-	let success: Bool
-	let error: String
-	let code: Int?
-}
-
-// MARK: - API Request Models
-
-struct CreateSplitBillRequest: Codable {
-	let title: String
-	let totalAmount: Double
-	let location: String?
-	let participants: [CreateParticipantRequest]
-	let currency: String
-	let description: String?
-}
-
-struct CreateParticipantRequest: Codable {
-	let name: String
-	let email: String?
-	let amountOwed: Double
-}
-
-struct UpdateSplitBillRequest: Codable {
-	let title: String?
-	let totalAmount: Double?
-	let location: String?
-	let participants: [UpdateParticipantRequest]?
-	let currency: String?
-	let description: String?
-	let isSettled: Bool?
-}
-
-struct UpdateParticipantRequest: Codable {
-	let id: String?
-	let name: String?
-	let email: String?
-	let amountOwed: Double?
-	let hasPaid: Bool?
-}
-
 // MARK: - Split Bill API Requests
 
-enum SplitBillAPIRequest {
+enum SplitBillService {
 	case getAllSplitBills(page: Int, limit: Int, sortBy: String?, sortOrder: String?)
 	case getSplitBill(id: String)
 	case searchSplitBills(query: String, page: Int, limit: Int)
@@ -84,7 +21,7 @@ enum SplitBillAPIRequest {
 	case markParticipantPaid(billId: String, participantId: String, paid: Bool)
 }
 
-extension SplitBillAPIRequest: NetworkRequest {
+extension SplitBillService: NetworkRequest {
 	
 	var baseURL: String {
 		return NetworkConfiguration.shared.baseURL
@@ -185,7 +122,7 @@ extension SplitBillAPIRequest: NetworkRequest {
 
 // MARK: - Split Bill API Service
 
-protocol SplitBillAPIServiceProtocol {
+protocol SplitBillAPIServiceable {
 	func getAllSplitBills(page: Int, limit: Int, sortBy: String?, sortOrder: String?) -> Observable<SplitBillResponse>
 	func getSplitBill(id: String) -> Observable<SingleSplitBillResponse>
 	func searchSplitBills(query: String, page: Int, limit: Int) -> Observable<SplitBillResponse>
@@ -196,7 +133,7 @@ protocol SplitBillAPIServiceProtocol {
 	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> Observable<SingleSplitBillResponse>
 }
 
-final class SplitBillAPIService: SplitBillAPIServiceProtocol {
+final class SplitBillAPIService: SplitBillAPIServiceable {
 	
 	private let networkManager: NetworkManager
 	
@@ -205,43 +142,43 @@ final class SplitBillAPIService: SplitBillAPIServiceProtocol {
 	}
 	
 	func getAllSplitBills(page: Int = 1, limit: Int = 20, sortBy: String? = "date", sortOrder: String? = "desc") -> Observable<SplitBillResponse> {
-		let request = SplitBillAPIRequest.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
+		let request = SplitBillService.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
 		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
 	}
 	
 	func getSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
-		let request = SplitBillAPIRequest.getSplitBill(id: id)
+		let request = SplitBillService.getSplitBill(id: id)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}
 	
 	func searchSplitBills(query: String, page: Int = 1, limit: Int = 20) -> Observable<SplitBillResponse> {
-		let request = SplitBillAPIRequest.searchSplitBills(query: query, page: page, limit: limit)
+		let request = SplitBillService.searchSplitBills(query: query, page: page, limit: limit)
 		return networkManager.execute(request: request, responseType: SplitBillResponse.self)
 	}
 	
 	func createSplitBill(_ request: CreateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
-		let apiRequest = SplitBillAPIRequest.createSplitBill(request)
+		let apiRequest = SplitBillService.createSplitBill(request)
 		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
 	}
 	
 	func updateSplitBill(id: String, request: UpdateSplitBillRequest) -> Observable<SingleSplitBillResponse> {
-		let apiRequest = SplitBillAPIRequest.updateSplitBill(id: id, request)
+		let apiRequest = SplitBillService.updateSplitBill(id: id, request)
 		return networkManager.execute(request: apiRequest, responseType: SingleSplitBillResponse.self)
 	}
 	
 	func deleteSplitBill(id: String) -> Observable<Void> {
-		let request = SplitBillAPIRequest.deleteSplitBill(id: id)
+		let request = SplitBillService.deleteSplitBill(id: id)
 		return networkManager.execute(request: request)
 			.map { _ in () }
 	}
 	
 	func settleSplitBill(id: String) -> Observable<SingleSplitBillResponse> {
-		let request = SplitBillAPIRequest.settleSplitBill(id: id)
+		let request = SplitBillService.settleSplitBill(id: id)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}
 	
 	func markParticipantPaid(billId: String, participantId: String, paid: Bool) -> Observable<SingleSplitBillResponse> {
-		let request = SplitBillAPIRequest.markParticipantPaid(billId: billId, participantId: participantId, paid: paid)
+		let request = SplitBillService.markParticipantPaid(billId: billId, participantId: participantId, paid: paid)
 		return networkManager.execute(request: request, responseType: SingleSplitBillResponse.self)
 	}
 }

@@ -26,7 +26,7 @@ final class NetworkManager {
 	private let decoder: JSONDecoder
 	private let encoder: JSONEncoder
 	
-	private init() {
+	init() {
 		let configuration = URLSessionConfiguration.default
 		configuration.timeoutIntervalForRequest = 30.0
 		configuration.timeoutIntervalForResource = 60.0
@@ -56,8 +56,8 @@ final class NetworkManager {
 			return Observable.error(NetworkError.invalidURL)
 		}
 		
-		return session.rx.data(request: urlRequest)
-			.map { [weak self] data, response in
+		return session.rx.response(request: urlRequest)
+			.map { [weak self] response, data in
 				try self?.handleResponse(data: data, response: response) ?? data
 			}
 			.map { data in
@@ -74,8 +74,8 @@ final class NetworkManager {
 			return Observable.error(NetworkError.invalidURL)
 		}
 		
-		return session.rx.data(request: urlRequest)
-			.map { [weak self] data, response in
+		return session.rx.response(request: urlRequest)
+			.map { [weak self] response, data in
 				try self?.handleResponse(data: data, response: response) ?? data
 			}
 			.catch { error in
