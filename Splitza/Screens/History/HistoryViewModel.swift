@@ -43,6 +43,10 @@ final class HistoryViewModel {
 	private let repository: SplitBillRepository
 	private let disposeBag = DisposeBag()
 	
+	// Background schedulers for different types of work
+	private let networkScheduler = ConcurrentDispatchQueueScheduler(qos: .userInitiated)
+	private let processingScheduler = ConcurrentDispatchQueueScheduler(qos: .background)
+	
 	// MARK: - Delegate
 	
 	weak var delegate: HistoryViewModelDelegate?	// MARK: - Computed Properties
@@ -98,7 +102,6 @@ final class HistoryViewModel {
 	}
 	
 	// MARK: - Public Methods
-	
 	func loadData() {
 		viewStateRelay.accept(.loading)
 		
@@ -106,6 +109,7 @@ final class HistoryViewModel {
 		SplitBillManager.shared.loadSampleData()
 		
 		repository.getAllSplitBills()
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] bills in
@@ -121,8 +125,10 @@ final class HistoryViewModel {
 			)
 			.disposed(by: disposeBag)
 	}
+	
 	func refreshData() {
 		repository.getAllSplitBills()
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] bills in
@@ -160,6 +166,7 @@ final class HistoryViewModel {
 		let splitBill = currentDataSource[index]
 		
 		repository.deleteSplitBill(id: splitBill.id)
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] _ in
@@ -189,6 +196,7 @@ final class HistoryViewModel {
 	
 	func addSplitBill(_ splitBill: SplitBill) {
 		repository.createSplitBill(splitBill)
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] _ in
@@ -203,6 +211,7 @@ final class HistoryViewModel {
 	
 	func updateSplitBill(_ splitBill: SplitBill) {
 		repository.updateSplitBill(splitBill)
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] _ in
@@ -221,6 +230,7 @@ final class HistoryViewModel {
 		let splitBill = currentDataSource[index]
 		
 		repository.settleSplitBill(id: splitBill.id)
+			.subscribe(on: networkScheduler)
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] _ in
@@ -245,6 +255,7 @@ final class HistoryViewModel {
 			isSearchingRelay.accept(true)
 			
 			repository.searchSplitBills(query: trimmedQuery)
+				.subscribe(on: networkScheduler)
 				.observe(on: MainScheduler.instance)
 				.subscribe(
 					onNext: { [weak self] searchResults in
@@ -264,15 +275,23 @@ final class HistoryViewModel {
 	
 	private func performLocalSearch(query: String) {
 		let lowercasedQuery = query.lowercased()
-		let filtered = splitBillsRelay.value.filter { splitBill in
-			splitBill.title.lowercased().contains(lowercasedQuery) ||
-			splitBill.location?.lowercased().contains(lowercasedQuery) == true ||
-			splitBill.description?.lowercased().contains(lowercasedQuery) == true ||
-			splitBill.participants.contains { $0.name.lowercased().contains(lowercasedQuery) }
-		}.sorted { $0.date > $1.date }
 		
-		filteredSplitBillsRelay.accept(filtered)
-		delegate?.historyViewModelDidUpdateData(self)
+		Observable.just(splitBillsRelay.value)
+			.subscribe(on: processingScheduler)
+			.map { bills in
+				bills.filter { splitBill in
+					splitBill.title.lowercased().contains(lowercasedQuery) ||
+					splitBill.location?.lowercased().contains(lowercasedQuery) == true ||
+					splitBill.description?.lowercased().contains(lowercasedQuery) == true ||
+					splitBill.participants.contains { $0.name.lowercased().contains(lowercasedQuery) }
+				}.sorted { $0.date > $1.date }
+			}
+			.observe(on: MainScheduler.instance)
+			.subscribe(onNext: { [weak self] filtered in
+				self?.filteredSplitBillsRelay.accept(filtered)
+				self?.delegate?.historyViewModelDidUpdateData(self!)
+			})
+			.disposed(by: disposeBag)
 	}
 	
 	private func updateFilteredBills(_ bills: [SplitBill]) {
@@ -318,22 +337,30 @@ extension HistoryViewModel {
 		}
 	}
 	
-	func getStatistics() -> (
+	func getStatistics() -> Observable<(
 		totalBills: Int,
 		settledBills: Int,
 		pendingBills: Int,
 		totalAmount: Double,
 		settledAmount: Double,
 		pendingAmount: Double
-	) {
-		return (
-			totalBills: totalBillsCount,
-			settledBills: settledBillsCount,
-			pendingBills: pendingBillsCount,
-			totalAmount: totalAmountOwed,
-			settledAmount: settledAmount,
-			pendingAmount: pendingAmount
-		)
+	)> {
+		return Observable.just(splitBillsRelay.value)
+			.subscribe(on: processingScheduler)
+			.map { bills in
+				let settledBills = bills.filter { $0.isSettled }
+				let pendingBills = bills.filter { !$0.isSettled }
+				
+				return (
+					totalBills: bills.count,
+					settledBills: settledBills.count,
+					pendingBills: pendingBills.count,
+					totalAmount: bills.reduce(0) { $0 + $1.totalAmount },
+					settledAmount: settledBills.reduce(0) { $0 + $1.totalAmount },
+					pendingAmount: pendingBills.reduce(0) { $0 + $1.totalAmount }
+				)
+			}
+			.observe(on: MainScheduler.instance)
 	}
 }
 
