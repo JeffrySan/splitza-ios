@@ -9,13 +9,6 @@ import Foundation
 import RxSwift
 import RxRelay
 
-// MARK: - HistoryViewModelDelegate
-
-protocol HistoryViewModelDelegate: AnyObject {
-	func historyViewModelDidUpdateData(_ viewModel: HistoryViewModel)
-	func historyViewModel(_ viewModel: HistoryViewModel, didEncounterError error: Error)
-}
-
 // MARK: - HistoryViewState
 
 enum HistoryViewState {
@@ -31,25 +24,20 @@ enum HistoryViewState {
 final class HistoryViewModel {
 	
 	// MARK: - Reactive Properties
+	let splitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
+	let filteredSplitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
+	let isSearchingRelay = BehaviorRelay<Bool>(value: false)
+	let searchQueryRelay = BehaviorRelay<String>(value: "")
+	let viewStateRelay = BehaviorRelay<HistoryViewState>(value: .loading)
 	
-	private let splitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
-	private let filteredSplitBillsRelay = BehaviorRelay<[SplitBill]>(value: [])
-	private let isSearchingRelay = BehaviorRelay<Bool>(value: false)
-	private let searchQueryRelay = BehaviorRelay<String>(value: "")
-	private let viewStateRelay = BehaviorRelay<HistoryViewState>(value: .loading)
+	let disposeBag = DisposeBag()
 	
 	// MARK: - Private Properties
-	
 	private let repository: SplitBillRepository
-	private let disposeBag = DisposeBag()
 	
 	// Background schedulers for different types of work
 	private let networkScheduler = ConcurrentDispatchQueueScheduler(qos: .userInitiated)
 	private let processingScheduler = ConcurrentDispatchQueueScheduler(qos: .background)
-	
-	// MARK: - Delegate
-	
-	weak var delegate: HistoryViewModelDelegate?	// MARK: - Computed Properties
 	
 	var currentDataSource: [SplitBill] {
 		return isSearchingRelay.value ? filteredSplitBillsRelay.value : splitBillsRelay.value
@@ -116,11 +104,9 @@ final class HistoryViewModel {
 					self?.splitBillsRelay.accept(bills)
 					self?.updateFilteredBills(bills)
 					self?.viewStateRelay.accept(.loaded)
-					self?.delegate?.historyViewModelDidUpdateData(self!)
 				},
 				onError: { [weak self] error in
 					self?.viewStateRelay.accept(.error(error))
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
 				}
 			)
 			.disposed(by: disposeBag)
@@ -134,10 +120,10 @@ final class HistoryViewModel {
 				onNext: { [weak self] bills in
 					self?.splitBillsRelay.accept(bills)
 					self?.updateFilteredBills(bills)
-					self?.delegate?.historyViewModelDidUpdateData(self!)
+					self?.viewStateRelay.accept(.loaded)
 				},
 				onError: { [weak self] error in
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
+					self?.viewStateRelay.accept(.error(error))
 				}
 			)
 			.disposed(by: disposeBag)
@@ -152,16 +138,22 @@ final class HistoryViewModel {
 		searchQueryRelay.accept("")
 		isSearchingRelay.accept(false)
 		filteredSplitBillsRelay.accept(splitBillsRelay.value)
-		delegate?.historyViewModelDidUpdateData(self)
 	}
 	
 	func splitBill(at index: Int) -> SplitBill? {
-		guard index < currentDataSource.count else { return nil }
+		
+		guard index < currentDataSource.count else {
+			return nil
+		}
+		
 		return currentDataSource[index]
 	}
 	
 	func deleteSplitBill(at index: Int) {
-		guard index < currentDataSource.count else { return }
+		
+		guard index < currentDataSource.count else {
+			return
+		}
 		
 		let splitBill = currentDataSource[index]
 		
@@ -185,10 +177,10 @@ final class HistoryViewModel {
 						}
 					}
 					
-					self?.delegate?.historyViewModelDidUpdateData(self!)
+					self?.viewStateRelay.accept(.loaded)
 				},
 				onError: { [weak self] error in
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
+					self?.viewStateRelay.accept(.error(error))
 				}
 			)
 			.disposed(by: disposeBag)
@@ -203,7 +195,7 @@ final class HistoryViewModel {
 					self?.refreshData()
 				},
 				onError: { [weak self] error in
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
+					self?.viewStateRelay.accept(.error(error))
 				}
 			)
 			.disposed(by: disposeBag)
@@ -218,7 +210,7 @@ final class HistoryViewModel {
 					self?.refreshData()
 				},
 				onError: { [weak self] error in
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
+					self?.viewStateRelay.accept(.error(error))
 				}
 			)
 			.disposed(by: disposeBag)
@@ -237,7 +229,7 @@ final class HistoryViewModel {
 					self?.refreshData()
 				},
 				onError: { [weak self] error in
-					self?.delegate?.historyViewModel(self!, didEncounterError: error)
+					self?.viewStateRelay.accept(.error(error))
 				}
 			)
 			.disposed(by: disposeBag)
@@ -260,7 +252,6 @@ final class HistoryViewModel {
 				.subscribe(
 					onNext: { [weak self] searchResults in
 						self?.filteredSplitBillsRelay.accept(searchResults)
-						self?.delegate?.historyViewModelDidUpdateData(self!)
 					},
 					onError: { [weak self] error in
 						// Fallback to local search if remote search fails
@@ -270,7 +261,7 @@ final class HistoryViewModel {
 				.disposed(by: disposeBag)
 		}
 		
-		delegate?.historyViewModelDidUpdateData(self)
+		viewStateRelay.accept(isEmpty ? (isSearchingRelay.value ? .searchEmpty : .empty) : .loaded)
 	}
 	
 	private func performLocalSearch(query: String) {
@@ -289,7 +280,7 @@ final class HistoryViewModel {
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] filtered in
 				self?.filteredSplitBillsRelay.accept(filtered)
-				self?.delegate?.historyViewModelDidUpdateData(self!)
+				self?.viewStateRelay.accept(.loaded)
 			})
 			.disposed(by: disposeBag)
 	}

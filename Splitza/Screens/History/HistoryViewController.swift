@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxRelay
 
 final class HistoryViewController: UIViewController {
 	
@@ -115,9 +117,13 @@ final class HistoryViewController: UIViewController {
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		
+		observeViewModel()
+		
 		setupUI()
-		setupViewModel()
+		
 		viewModel.loadData()
+		animateTableViewEntrance()
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {
@@ -125,12 +131,70 @@ final class HistoryViewController: UIViewController {
 		
 		// Hide navigation bar for custom header
 		navigationController?.setNavigationBarHidden(true, animated: animated)
-		
-		// Refresh data when view appears
-		viewModel.refreshData()
 	}
 	
-	// MARK: - Setup
+	// MARK: - Setup Data Layer
+	
+	private func observeViewModel() {
+		
+		let allSplitBillObservable = viewModel.splitBillsRelay
+			.asObservable()
+			.distinctUntilChanged()
+		
+		let filteredSplitBillsObservable = viewModel.filteredSplitBillsRelay
+			.asObservable()
+			.distinctUntilChanged()
+		
+		viewModel.isSearchingRelay
+			.asObservable()
+			.distinctUntilChanged()
+			.map { isSearchingState -> Observable<[SplitBill]> in
+				
+				return isSearchingState ? filteredSplitBillsObservable : allSplitBillObservable
+			}
+			.observe(on: MainScheduler.instance)
+			.subscribe(onNext: { [weak self] _ in
+				
+				print("[Lala] Thread: \(Thread.current), ViewState: \(self?.viewModel.viewStateRelay.value)")
+				
+				self?.updateUI()
+			})
+			.disposed(by: viewModel.disposeBag)
+		
+		viewModel.viewStateRelay
+			.observe(on: MainScheduler.instance)
+			.subscribe(onNext: { [weak self] viewState in
+				
+				if case .error(let error) = viewState {
+					self?.showErrorAlert(error: error)
+					return
+				}
+				
+				self?.updateUI()
+			})
+			.disposed(by: viewModel.disposeBag)
+	}
+	
+	private func animateTableViewEntrance() {
+		let cells = tableView.visibleCells
+		let tableViewHeight = tableView.bounds.height
+		
+		for (index, cell) in cells.enumerated() {
+			cell.transform = CGAffineTransform(translationX: 0, y: tableViewHeight)
+			
+			UIView.animate(
+				withDuration: 0.8,
+				delay: Double(index) * 0.1,
+				usingSpringWithDamping: 0.8,
+				initialSpringVelocity: 0.5,
+				options: [.curveEaseInOut]
+			) {
+				cell.transform = .identity
+			}
+		}
+	}
+	
+	// MARK: - Setup UI Components
 	
 	private func setupUI() {
 		view.backgroundColor = .systemBackground
@@ -150,10 +214,6 @@ final class HistoryViewController: UIViewController {
 		
 		setupConstraints()
 		setupKeyboardHandling()
-	}
-	
-	private func setupViewModel() {
-		viewModel.delegate = self
 	}
 	
 	private func setupConstraints() {
@@ -287,60 +347,6 @@ final class HistoryViewController: UIViewController {
 	}
 }
 
-// MARK: - Enhanced Features
-
-extension HistoryViewController {
-	
-	func showStatistics() {
-		let stats = viewModel.getStatistics()
-		
-		let message = """
-  Total Bills: \(stats.totalBills)
-  Settled: \(stats.settledBills)
-  Pending: \(stats.pendingBills)
-  
-  Total Amount: $\(String(format: "%.2f", stats.totalAmount))
-  Settled: $\(String(format: "%.2f", stats.settledAmount))
-  Pending: $\(String(format: "%.2f", stats.pendingAmount))
-  """
-		
-		let alert = UIAlertController(
-			title: "Split Bill Statistics",
-			message: message,
-			preferredStyle: .alert
-		)
-		
-		alert.addAction(UIAlertAction(title: "OK", style: .default))
-		present(alert, animated: true)
-	}
-	
-	private func animateTableViewEntrance() {
-		let cells = tableView.visibleCells
-		let tableViewHeight = tableView.bounds.height
-		
-		for (index, cell) in cells.enumerated() {
-			cell.transform = CGAffineTransform(translationX: 0, y: tableViewHeight)
-			
-			UIView.animate(
-				withDuration: 0.8,
-				delay: Double(index) * 0.1,
-				usingSpringWithDamping: 0.8,
-				initialSpringVelocity: 0.5,
-				options: [.curveEaseInOut]
-			) {
-				cell.transform = .identity
-			}
-		}
-	}
-	
-	override func viewDidAppear(_ animated: Bool) {
-		super.viewDidAppear(animated)
-		
-		// Add subtle entrance animation
-		animateTableViewEntrance()
-	}
-}
-
 // MARK: - UITableViewDataSource
 
 extension HistoryViewController: UITableViewDataSource {
@@ -349,6 +355,7 @@ extension HistoryViewController: UITableViewDataSource {
 	}
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+		
 		guard let cell = tableView.dequeueReusableCell(withIdentifier: SplitBillTableViewCell.identifier, for: indexPath) as? SplitBillTableViewCell,
 			  let splitBill = viewModel.splitBill(at: indexPath.row) else {
 			return UITableViewCell()
@@ -496,22 +503,6 @@ extension HistoryViewController: CustomSearchBarDelegate {
 	
 	func searchBarDidEndEditing(_ searchBar: CustomSearchBar) {
 		// Optional: Add any additional behavior when search ends
-	}
-}
-
-// MARK: - HistoryViewModelDelegate
-
-extension HistoryViewController: HistoryViewModelDelegate {
-	func historyViewModelDidUpdateData(_ viewModel: HistoryViewModel) {
-		DispatchQueue.main.async { [weak self] in
-			self?.updateUI()
-		}
-	}
-	
-	func historyViewModel(_ viewModel: HistoryViewModel, didEncounterError error: Error) {
-		DispatchQueue.main.async { [weak self] in
-			self?.showErrorAlert(error: error)
-		}
 	}
 	
 	private func showErrorAlert(error: Error) {

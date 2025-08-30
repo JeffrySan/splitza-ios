@@ -23,6 +23,10 @@ enum SplitBillService {
 
 extension SplitBillService: NetworkRequest {
 	
+	var parameters: [String : Any]? {
+		return nil
+	}
+	
 	var baseURL: String {
 		return NetworkConfiguration.shared.baseURL
 	}

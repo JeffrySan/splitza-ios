@@ -259,6 +259,8 @@ extension NetworkManager {
 // MARK: - Generic Network Request
 
 private struct GenericNetworkRequest: NetworkRequest {
+	
+	var baseURL: String
 	let path: String
 	let method: HTTPMethod
 	let headers: [String: String]?
@@ -274,6 +276,7 @@ private struct GenericNetworkRequest: NetworkRequest {
 		body: Data? = nil,
 		timeoutInterval: TimeInterval = 30.0
 	) {
+		self.baseURL = NetworkConfiguration.shared.baseURL
 		self.path = path
 		self.method = method
 		self.headers = headers

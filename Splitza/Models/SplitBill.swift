@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SplitBill: Codable {
+struct SplitBill: Codable, Equatable {
 	let id: String
 	let title: String
 	let totalAmount: Double
@@ -39,7 +39,7 @@ struct SplitBill: Codable {
 	}
 }
 
-struct Participant: Codable {
+struct Participant: Codable, Equatable {
 	let id: String
 	let name: String
 	let email: String?
