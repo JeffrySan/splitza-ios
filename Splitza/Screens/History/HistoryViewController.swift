@@ -17,37 +17,10 @@ final class HistoryViewController: UIViewController {
 	
 	// MARK: - UI Components
 	
-	private lazy var headerView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .systemBackground
-		view.translatesAutoresizingMaskIntoConstraints = false
+	private lazy var headerView: HistoryHeaderView = {
+		let view = HistoryHeaderView()
+		view.searchBar.delegate = self
 		return view
-	}()
-	
-	private lazy var titleLabel: UILabel = {
-		let label = UILabel()
-		label.text = "Split History"
-		label.font = .systemFont(ofSize: 32, weight: .bold)
-		label.textColor = .label
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
-	
-	private lazy var subtitleLabel: UILabel = {
-		let label = UILabel()
-		label.text = "Track all your shared expenses"
-		label.font = .systemFont(ofSize: 16, weight: .medium)
-		label.textColor = .secondaryLabel
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
-	
-	private lazy var searchBar: CustomSearchBar = {
-		let searchBar = CustomSearchBar()
-		searchBar.delegate = self
-		searchBar.placeholder = "Search bills, locations, people..."
-		searchBar.translatesAutoresizingMaskIntoConstraints = false
-		return searchBar
 	}()
 	
 	private lazy var tableView: UITableView = {
@@ -63,43 +36,7 @@ final class HistoryViewController: UIViewController {
 		return tableView
 	}()
 	
-	private lazy var emptyStateView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .clear
-		view.isHidden = true
-		view.translatesAutoresizingMaskIntoConstraints = false
-		return view
-	}()
-	
-	private lazy var emptyStateImageView: UIImageView = {
-		let imageView = UIImageView()
-		imageView.image = UIImage(systemName: "doc.text.magnifyingglass")
-		imageView.tintColor = .systemGray3
-		imageView.contentMode = .scaleAspectFit
-		imageView.translatesAutoresizingMaskIntoConstraints = false
-		return imageView
-	}()
-	
-	private lazy var emptyStateLabel: UILabel = {
-		let label = UILabel()
-		label.text = "No split bills found"
-		label.font = .systemFont(ofSize: 20, weight: .semibold)
-		label.textColor = .systemGray
-		label.textAlignment = .center
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
-	
-	private lazy var emptyStateSubLabel: UILabel = {
-		let label = UILabel()
-		label.text = "Your split bill history will appear here"
-		label.font = .systemFont(ofSize: 16, weight: .medium)
-		label.textColor = .systemGray2
-		label.textAlignment = .center
-		label.numberOfLines = 0
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
+	private lazy var emptyStateView: HistoryEmptyStateView = HistoryEmptyStateView()
 	
 	// MARK: - Initialization
 	
@@ -202,74 +139,44 @@ final class HistoryViewController: UIViewController {
 		
 		// Add subviews
 		view.addSubview(headerView)
-		headerView.addSubview(titleLabel)
-		headerView.addSubview(subtitleLabel)
-		headerView.addSubview(searchBar)
-		
 		view.addSubview(tableView)
 		view.addSubview(emptyStateView)
-		
-		emptyStateView.addSubview(emptyStateImageView)
-		emptyStateView.addSubview(emptyStateLabel)
-		emptyStateView.addSubview(emptyStateSubLabel)
 		
 		setupConstraints()
 		setupKeyboardHandling()
 	}
 	
 	private func setupConstraints() {
+		setupHeaderConstraints()
+		setupTableViewConstraints()
+		setupEmptyStateConstraints()
+	}
+	
+	private func setupHeaderConstraints() {
 		let safeArea = view.safeAreaLayoutGuide
 		
 		NSLayoutConstraint.activate([
-			// Header view
 			headerView.topAnchor.constraint(equalTo: safeArea.topAnchor),
 			headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-			
-			// Title label
-			titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
-			titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-			titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-			
-			// Subtitle label
-			subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-			subtitleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-			subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-			
-			// Search bar
-			searchBar.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 20),
-			searchBar.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-			searchBar.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-			searchBar.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -16),
-			
-			// Table view
+			headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+		])
+	}
+	
+	private func setupTableViewConstraints() {
+		NSLayoutConstraint.activate([
 			tableView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
 			tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
 			tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-			tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-			
-			// Empty state view
-			emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-			emptyStateView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 40),
-			emptyStateView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -40),
-			
-			// Empty state image
-			emptyStateImageView.topAnchor.constraint(equalTo: emptyStateView.topAnchor),
-			emptyStateImageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
-			emptyStateImageView.widthAnchor.constraint(equalToConstant: 80),
-			emptyStateImageView.heightAnchor.constraint(equalToConstant: 80),
-			
-			// Empty state label
-			emptyStateLabel.topAnchor.constraint(equalTo: emptyStateImageView.bottomAnchor, constant: 20),
-			emptyStateLabel.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
-			emptyStateLabel.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor),
-			
-			// Empty state sub label
-			emptyStateSubLabel.topAnchor.constraint(equalTo: emptyStateLabel.bottomAnchor, constant: 8),
-			emptyStateSubLabel.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
-			emptyStateSubLabel.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor),
-			emptyStateSubLabel.bottomAnchor.constraint(equalTo: emptyStateView.bottomAnchor)
+			tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+		])
+	}
+	
+	private func setupEmptyStateConstraints() {
+		NSLayoutConstraint.activate([
+			emptyStateView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+			emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
 		])
 	}
 	
@@ -297,16 +204,18 @@ final class HistoryViewController: UIViewController {
 	// MARK: - UI Updates
 	
 	private func updateUI() {
-		let emptyStateInfo = viewModel.emptyStateInfo
 		let isEmpty = viewModel.isEmpty
+		let emptyStateInfo = viewModel.emptyStateInfo
 		
 		emptyStateView.isHidden = !isEmpty
 		tableView.isHidden = isEmpty
 		
 		if !emptyStateInfo.title.isEmpty {
-			emptyStateLabel.text = emptyStateInfo.title
-			emptyStateSubLabel.text = emptyStateInfo.subtitle
-			emptyStateImageView.image = UIImage(systemName: emptyStateInfo.imageName)
+			emptyStateView.configure(
+				title: emptyStateInfo.title,
+				subtitle: emptyStateInfo.subtitle,
+				imageName: emptyStateInfo.imageName
+			)
 		}
 		
 		tableView.reloadData()
