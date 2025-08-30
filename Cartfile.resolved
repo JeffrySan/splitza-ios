@@ -1,1 +1,2 @@
 github "ReactiveX/RxSwift" "6.9.0"
+github "SnapKit/SnapKit" "5.7.1"
