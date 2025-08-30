@@ -12,7 +12,7 @@ import RxSwift
 
 protocol SplitBillDataSource {
 	func getAllSplitBills() -> Observable<[SplitBill]>
-	func getSplitBill(id: String) -> Observable<SplitBill>
+	func getSplitBill(email: String, name: String) -> Observable<[SplitBill]>
 	func searchSplitBills(query: String) -> Observable<[SplitBill]>
 	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill>
 	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill>
@@ -59,8 +59,8 @@ final class SplitBillRepository {
 	
 	init(
 		localDataSource: SplitBillDataSource = LocalSplitBillDataSource(),
-		remoteDataSource: SplitBillDataSource = RemoteSplitBillDataSource(),
-		dataSourceType: DataSourceType = .local // Default to local for demo
+		remoteDataSource: SplitBillDataSource = SupabaseSplitBillDataSource(),
+		dataSourceType: DataSourceType
 	) {
 		self.localDataSource = localDataSource
 		self.remoteDataSource = remoteDataSource
@@ -91,21 +91,21 @@ final class SplitBillRepository {
 		}
 	}
 	
-	func getSplitBill(id: String) -> Observable<SplitBill> {
+	func getSplitBill(email: String, name: String) -> Observable<[SplitBill]> {
 		switch dataSourceType {
 		case .local:
-			return localDataSource.getSplitBill(id: id)
+			return localDataSource.getSplitBill(email: "", name: "")
 			
 		case .remote:
-			return remoteDataSource.getSplitBill(id: id)
+			return remoteDataSource.getSplitBill(email: "", name: "")
 			
 		case .hybrid:
-			return localDataSource.getSplitBill(id: id)
-				.catch { [weak self] _ -> Observable<SplitBill> in
+			return localDataSource.getSplitBill(email: "", name: "")
+				.catch { [weak self] _ -> Observable<[SplitBill]> in
 					guard let self = self else {
 						return Observable.error(SplitBillRepositoryError.splitBillNotFound)
 					}
-					return self.remoteDataSource.getSplitBill(id: id)
+					return self.remoteDataSource.getSplitBill(email: "", name: "")
 				}
 		}
 	}

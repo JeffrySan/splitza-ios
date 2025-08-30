@@ -12,11 +12,9 @@ import RxRelay
 final class HistoryViewController: UIViewController {
 	
 	// MARK: - Properties
-	
 	private let viewModel: HistoryViewModel
 	
 	// MARK: - UI Components
-	
 	private lazy var headerView: HistoryHeaderView = {
 		let view = HistoryHeaderView()
 		view.searchBar.delegate = self
@@ -59,7 +57,7 @@ final class HistoryViewController: UIViewController {
 		
 		setupUI()
 		
-		viewModel.loadData()
+//		viewModel.loadData()
 		animateTableViewEntrance()
 	}
 	

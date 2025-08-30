@@ -48,6 +48,15 @@ final class SplitBillManager {
 		}.sorted { $0.date > $1.date }
 	}
 	
+	func getAllSplitBills(email: String, name: String) -> [SplitBill] {
+		return splitBills.filter { splitBill in
+			splitBill.participants.contains { participant in
+				participant.email?.lowercased() == email.lowercased() ||
+				participant.name.lowercased() == name.lowercased()
+			}
+		}.sorted { $0.date > $1.date }
+	}
+	
 	// MARK: - Sample Data (for demo)
 	
 	func loadSampleData() {

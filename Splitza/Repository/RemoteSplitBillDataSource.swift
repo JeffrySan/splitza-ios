@@ -22,11 +22,8 @@ final class RemoteSplitBillDataSource: SplitBillDataSource {
 			}
 	}
 	
-	func getSplitBill(id: String) -> Observable<SplitBill> {
-		return apiService.getSplitBill(id: id)
-			.map { response in
-				response.data
-			}
+	func getSplitBill(email: String, name: String) -> Observable<[SplitBill]> {
+		return Observable.just([])
 	}
 	
 	func searchSplitBills(query: String) -> Observable<[SplitBill]> {

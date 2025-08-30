@@ -77,14 +77,14 @@ struct NetworkConfiguration {
 	// MARK: - Data Source Strategy
 	
 	var dataSourceType: SplitBillRepository.DataSourceType {
-		if !isNetworkingEnabled {
-			return .local
-		}
-		
-		if shouldUseHybridMode {
-			return .hybrid
-		}
-		
+//		if !isNetworkingEnabled {
+//			return .local
+//		}
+//		
+//		if shouldUseHybridMode {
+//			return .hybrid
+//		}
+//		
 		return .remote
 	}
 	

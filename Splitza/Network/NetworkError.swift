@@ -17,6 +17,7 @@ enum NetworkError: LocalizedError, Equatable {
 	case unauthorized
 	case forbidden
 	case notFound
+	case selfDeallocated
 	case unknown(Error)
 	
 	var errorDescription: String? {
@@ -39,6 +40,8 @@ enum NetworkError: LocalizedError, Equatable {
 			return "Access forbidden"
 		case .notFound:
 			return "Resource not found"
+		case .selfDeallocated:
+			return "The instance has been deallocated"
 		case .unknown(let error):
 			return "Unknown error: \(error.localizedDescription)"
 		}
@@ -53,7 +56,8 @@ enum NetworkError: LocalizedError, Equatable {
 			(.timeout, .timeout),
 			(.unauthorized, .unauthorized),
 			(.forbidden, .forbidden),
-			(.notFound, .notFound):
+			(.notFound, .notFound),
+			(.selfDeallocated, .selfDeallocated):
 			return true
 		case (.serverError(let lhsCode), .serverError(let rhsCode)):
 			return lhsCode == rhsCode

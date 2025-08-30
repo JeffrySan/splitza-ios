@@ -20,14 +20,14 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		return Observable.just(bills)
 	}
 	
-	func getSplitBill(id: String) -> Observable<SplitBill> {
-		let bills = manager.getAllSplitBills()
+	func getSplitBill(email: String, name: String) -> Observable<[SplitBill]> {
+		let participantBills = manager.getAllSplitBills(email: email, name: name)
 		
-		if let bill = bills.first(where: { $0.id == id }) {
-			return Observable.just(bill)
-		} else {
-			return Observable.error(SplitBillRepositoryError.splitBillNotFound)
+		if participantBills.isEmpty {
+			return Observable.error(NetworkError.noData)
 		}
+		
+		return Observable.just(participantBills)
 	}
 	
 	func searchSplitBills(query: String) -> Observable<[SplitBill]> {
