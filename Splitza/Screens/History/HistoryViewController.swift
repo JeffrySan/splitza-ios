@@ -66,6 +66,66 @@ final class HistoryViewController: UIViewController {
 		
 		// Hide navigation bar for custom header
 		navigationController?.setNavigationBarHidden(true, animated: animated)
+		
+		// Setup navigation bar items when needed
+		setupNavigationBar()
+	}
+	
+	// MARK: - Navigation Setup
+	
+	private func setupNavigationBar() {
+		// Create add button
+		let addButton = UIBarButtonItem(
+			barButtonSystemItem: .add,
+			target: self,
+			action: #selector(addButtonTapped)
+		)
+		addButton.tintColor = .systemBlue
+		
+		// You can add this to a navigation controller if needed
+		// For now, we'll add it as a floating action button
+		setupFloatingActionButton()
+	}
+	
+	private func setupFloatingActionButton() {
+		let addButton = UIButton(type: .system)
+		addButton.setImage(UIImage(systemName: "plus"), for: .normal)
+		addButton.backgroundColor = .systemBlue
+		addButton.tintColor = .white
+		addButton.layer.cornerRadius = 28
+		addButton.layer.shadowColor = UIColor.black.cgColor
+		addButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+		addButton.layer.shadowRadius = 4
+		addButton.layer.shadowOpacity = 0.3
+		addButton.translatesAutoresizingMaskIntoConstraints = false
+		
+		addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+		
+		view.addSubview(addButton)
+		
+		NSLayoutConstraint.activate([
+			addButton.widthAnchor.constraint(equalToConstant: 56),
+			addButton.heightAnchor.constraint(equalToConstant: 56),
+			addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+			addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+		])
+	}
+	
+	@objc private func addButtonTapped() {
+		presentAddBillViewController()
+	}
+	
+	private func presentAddBillViewController() {
+		let addBillVC = AddBillViewController()
+		
+		addBillVC.modalTransitionStyle = .coverVertical
+		addBillVC.modalPresentationStyle = .popover
+		
+		// Add haptic feedback
+		let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+		impactFeedback.impactOccurred()
+		
+		present(addBillVC, animated: true)
 	}
 	
 	// MARK: - Setup Data Layer

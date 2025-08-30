@@ -82,4 +82,22 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		
 		return Observable.just(settledBill)
 	}
+	
+	// MARK: - User-specific queries
+	
+	func getSplitBillsForUser(email: String) -> Observable<[SplitBill]> {
+		let allBills = manager.getAllSplitBills()
+		let userBills = allBills.filter { bill in
+			bill.participants.contains { $0.email?.lowercased() == email.lowercased() }
+		}
+		return Observable.just(userBills)
+	}
+	
+	func getSplitBillsForUser(name: String) -> Observable<[SplitBill]> {
+		let allBills = manager.getAllSplitBills()
+		let userBills = allBills.filter { bill in
+			bill.participants.contains { $0.name.lowercased().contains(name.lowercased()) }
+		}
+		return Observable.just(userBills)
+	}
 }

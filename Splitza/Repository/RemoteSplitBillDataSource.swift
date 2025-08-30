@@ -59,4 +59,22 @@ final class RemoteSplitBillDataSource: SplitBillDataSource {
 				response.data
 			}
 	}
+	
+	// MARK: - User-specific queries
+	
+	func getSplitBillsForUser(email: String) -> Observable<[SplitBill]> {
+		// This would typically be a specific API endpoint
+		return Observable.create { observer in
+			observer.onError(NetworkError.notImplemented)
+			return Disposables.create()
+		}
+	}
+	
+	func getSplitBillsForUser(name: String) -> Observable<[SplitBill]> {
+		// This would typically be a specific API endpoint
+		return Observable.create { observer in
+			observer.onError(NetworkError.notImplemented)
+			return Disposables.create()
+		}
+	}
 }

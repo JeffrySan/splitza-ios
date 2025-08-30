@@ -157,12 +157,49 @@ final class SupabaseSplitBillDataSource: SplitBillDataSource {
 		})
 	}
 	
-	func createSplitBill(_ splitBill: SplitBill) -> RxSwift.Observable<SplitBill> {
-		return Observable.create({ (observer) -> Disposable in
-			observer.onError(NetworkError.notFound)
+	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
+		return Observable.create { [weak self] observer -> Disposable in
 			
-			return Disposables.create()
-		})
+			guard let self else {
+				observer.onError(NetworkError.selfDeallocated)
+				return Disposables.create()
+			}
+			
+			let task = Task {
+				do {
+					// First, insert the split bill
+					let splitBillDB = splitBill.toDatabase
+					let createdBillDB: SplitBillDB = try await self.supabaseClient
+						.from("split_bills")
+						.insert(splitBillDB)
+						.select()
+						.single()
+						.execute()
+						.value
+					
+					// Then, insert participants
+					let participantsDB = splitBill.participants.map { $0.toDatabase(splitBillId: createdBillDB.id) }
+					let createdParticipantsDB: [ParticipantDB] = try await self.supabaseClient
+						.from("participants")
+						.insert(participantsDB)
+						.select()
+						.execute()
+						.value
+					
+					// Convert back to app model
+					let createdSplitBill = SplitBill(from: createdBillDB, participants: createdParticipantsDB)
+					
+					observer.onNext(createdSplitBill)
+					observer.onCompleted()
+				} catch {
+					observer.onError(NetworkError.unknown(error))
+				}
+			}
+			
+			return Disposables.create {
+				task.cancel()
+			}
+		}
 	}
 	
 	func updateSplitBill(_ splitBill: SplitBill) -> RxSwift.Observable<SplitBill> {
