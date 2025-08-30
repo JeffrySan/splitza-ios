@@ -113,6 +113,8 @@ final class AddBillViewController: UIViewController {
 		tableView.separatorStyle = .none
 		tableView.showsVerticalScrollIndicator = false
 		tableView.isScrollEnabled = false
+		tableView.clipsToBounds = false
+		tableView.estimatedSectionHeaderHeight = 50
 		tableView.register(ParticipantInputCell.self, forCellReuseIdentifier: ParticipantInputCell.identifier)
 		tableView.translatesAutoresizingMaskIntoConstraints = false
 		return tableView
@@ -207,7 +209,9 @@ final class AddBillViewController: UIViewController {
 	}
 	
 	private func setupConstraints() {
-		tableViewHeightConstraint = participantsTableView.heightAnchor.constraint(equalToConstant: 200)
+		// Initial height should account for section header + one participant cell + padding
+		let initialHeight: CGFloat = 50 + 110 + 20 // section header + cell + padding
+		tableViewHeightConstraint = participantsTableView.heightAnchor.constraint(equalToConstant: initialHeight)
 		
 		NSLayoutConstraint.activate([
 			// Header view
@@ -281,7 +285,7 @@ final class AddBillViewController: UIViewController {
 			participantsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 			tableViewHeightConstraint,
 			
-			addParticipantButton.topAnchor.constraint(equalTo: participantsTableView.bottomAnchor, constant: 8),
+			addParticipantButton.topAnchor.constraint(equalTo: participantsTableView.bottomAnchor, constant: 16),
 			addParticipantButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
 			addParticipantButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 			addParticipantButton.heightAnchor.constraint(equalToConstant: 44),
@@ -447,8 +451,18 @@ final class AddBillViewController: UIViewController {
 	
 	private func updateTableViewHeight() {
 		let participantCount = viewModel.participantsRelay.value.count
-		let height = max(CGFloat(participantCount * 110), 110) // 110 per cell
+		// Account for section header height (around 50pt) + cell height (110pt each) + extra padding for button
+		let sectionHeaderHeight: CGFloat = 50
+		let cellHeight: CGFloat = 110
+		let addButtonHeight: CGFloat = 50
+		let extraPadding: CGFloat = 30 // Extra space to prevent button from covering content
+		let height = sectionHeaderHeight + (CGFloat(participantCount) * cellHeight) + addButtonHeight + extraPadding
 		tableViewHeightConstraint.constant = height
+		
+		// Animate the height change
+		UIView.animate(withDuration: 0.3) {
+			self.view.layoutIfNeeded()
+		}
 	}
 	
 	private func updateSaveButtonState(isEnabled: Bool) {
@@ -529,6 +543,29 @@ extension AddBillViewController: UITableViewDelegate {
 	
 	func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
 		return "Participants"
+	}
+	
+	func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+		return 50
+	}
+	
+	func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+		let headerView = UIView()
+		headerView.backgroundColor = .clear
+		
+		let titleLabel = UILabel()
+		titleLabel.text = "Participants"
+		titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+		titleLabel.textColor = .label
+		titleLabel.translatesAutoresizingMaskIntoConstraints = false
+		
+		headerView.addSubview(titleLabel)
+		NSLayoutConstraint.activate([
+			titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+			titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8)
+		])
+		
+		return headerView
 	}
 }
 
