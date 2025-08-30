@@ -134,14 +134,17 @@ final class HistoryViewController: UIViewController {
 	}
 	
 	// MARK: - Setup Data Layer
-	
 	private func observeViewModel() {
-		
-		let allSplitBillObservable = viewModel.splitBillsRelay
+		observeDataSourceChanges()
+		observeViewStateChanges()
+	}
+	
+	private func observeDataSourceChanges() {
+		lazy var allSplitBillObservable = viewModel.splitBillsRelay
 			.asObservable()
 			.distinctUntilChanged()
 		
-		let filteredSplitBillsObservable = viewModel.filteredSplitBillsRelay
+		lazy var filteredSplitBillsObservable = viewModel.filteredSplitBillsRelay
 			.asObservable()
 			.distinctUntilChanged()
 		
@@ -149,18 +152,16 @@ final class HistoryViewController: UIViewController {
 			.asObservable()
 			.distinctUntilChanged()
 			.map { isSearchingState -> Observable<[SplitBill]> in
-				
 				return isSearchingState ? filteredSplitBillsObservable : allSplitBillObservable
 			}
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] _ in
-				
-				print("[Lala] Thread: \(Thread.current), ViewState: \(self?.viewModel.viewStateRelay.value)")
-				
 				self?.updateUI()
 			})
 			.disposed(by: viewModel.disposeBag)
-		
+	}
+	
+	private func observeViewStateChanges() {
 		viewModel.viewStateRelay
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] viewState in
