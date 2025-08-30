@@ -26,8 +26,10 @@ final class ParticipantInputCell: UITableViewCell {
 	
 	private lazy var containerView: UIView = {
 		let view = UIView()
-		view.backgroundColor = .secondarySystemGroupedBackground
+		view.backgroundColor = .tertiarySystemGroupedBackground
 		view.layer.cornerRadius = 12
+		view.layer.borderWidth = 1
+		view.layer.borderColor = UIColor.separator.cgColor
 		view.translatesAutoresizingMaskIntoConstraints = false
 		return view
 	}()

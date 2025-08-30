@@ -40,8 +40,8 @@ final class AddBillViewController: UIViewController {
 	
 	private lazy var dragIndicator: UIView = {
 		let view = UIView()
-		view.backgroundColor = .systemGray3
-		view.layer.cornerRadius = 2
+		view.backgroundColor = .tertiaryLabel
+		view.layer.cornerRadius = 2.5
 		view.translatesAutoresizingMaskIntoConstraints = false
 		return view
 	}()
@@ -69,9 +69,9 @@ final class AddBillViewController: UIViewController {
 		button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
 		button.backgroundColor = .systemBlue
 		button.setTitleColor(.white, for: .normal)
-		button.layer.cornerRadius = 8
+		button.setTitleColor(.systemBackground, for: .disabled)
+		button.layer.cornerRadius = 10
 		button.isEnabled = false
-		button.alpha = 0.5
 		button.translatesAutoresizingMaskIntoConstraints = false
 		return button
 	}()
@@ -101,6 +101,8 @@ final class AddBillViewController: UIViewController {
 	private lazy var currencySegmentedControl: UISegmentedControl = {
 		let control = UISegmentedControl(items: ["USD", "IDR", "EUR", "GBP"])
 		control.selectedSegmentIndex = 0
+		control.backgroundColor = .systemGroupedBackground
+		control.selectedSegmentTintColor = .systemBlue
 		control.translatesAutoresizingMaskIntoConstraints = false
 		return control
 	}()
@@ -120,16 +122,21 @@ final class AddBillViewController: UIViewController {
 		let button = UIButton(type: .system)
 		button.setTitle("+ Add Participant", for: .normal)
 		button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-		button.backgroundColor = .systemGray6
-		button.layer.cornerRadius = 8
+		button.backgroundColor = .tertiarySystemGroupedBackground
+		button.setTitleColor(.systemBlue, for: .normal)
+		button.layer.cornerRadius = 10
+		button.layer.borderWidth = 1
+		button.layer.borderColor = UIColor.separator.cgColor
 		button.translatesAutoresizingMaskIntoConstraints = false
 		return button
 	}()
 	
 	private lazy var summaryView: UIView = {
 		let view = UIView()
-		view.backgroundColor = .secondarySystemGroupedBackground
+		view.backgroundColor = .tertiarySystemGroupedBackground
 		view.layer.cornerRadius = 12
+		view.layer.borderWidth = 1
+		view.layer.borderColor = UIColor.separator.cgColor
 		view.translatesAutoresizingMaskIntoConstraints = false
 		return view
 	}()
@@ -352,8 +359,7 @@ final class AddBillViewController: UIViewController {
 		viewModel.isFormValid
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] isValid in
-				self?.saveButton.isEnabled = isValid
-				self?.saveButton.alpha = isValid ? 1.0 : 0.5
+				self?.updateSaveButtonState(isEnabled: isValid)
 			})
 			.disposed(by: disposeBag)
 		
@@ -430,7 +436,10 @@ final class AddBillViewController: UIViewController {
 		let textField = UITextField()
 		textField.placeholder = placeholder
 		textField.borderStyle = .roundedRect
-		textField.backgroundColor = .secondarySystemGroupedBackground
+		textField.backgroundColor = .tertiarySystemGroupedBackground
+		textField.layer.borderWidth = 1
+		textField.layer.borderColor = UIColor.separator.cgColor
+		textField.layer.cornerRadius = 10
 		textField.returnKeyType = returnKeyType
 		textField.translatesAutoresizingMaskIntoConstraints = false
 		return textField
@@ -440,6 +449,20 @@ final class AddBillViewController: UIViewController {
 		let participantCount = viewModel.participantsRelay.value.count
 		let height = max(CGFloat(participantCount * 110), 110) // 110 per cell
 		tableViewHeightConstraint.constant = height
+	}
+	
+	private func updateSaveButtonState(isEnabled: Bool) {
+		saveButton.isEnabled = isEnabled
+		
+		UIView.animate(withDuration: 0.3) {
+			if isEnabled {
+				self.saveButton.backgroundColor = .systemBlue
+				self.saveButton.alpha = 1.0
+			} else {
+				self.saveButton.backgroundColor = .systemGray4
+				self.saveButton.alpha = 0.6
+			}
+		}
 	}
 	
 	private func handleKeyboardShow(_ notification: Notification) {
