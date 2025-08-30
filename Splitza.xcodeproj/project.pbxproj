@@ -10,6 +10,7 @@
 		7C05CA722E1E1A5200F2D1E2 /* RxSwift.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */; };
 		7C749E322E486C7900E0EB32 /* RxCocoa.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */; };
 		7C749E362E48716C00E0EB32 /* RxRelay.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E352E48716B00E0EB32 /* RxRelay.xcframework */; };
+		7CF05BA72E62B5F9007857A1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 7CF05BA62E62B5F9007857A1 /* Supabase */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7CF05BA72E62B5F9007857A1 /* Supabase in Frameworks */,
 				7C749E362E48716C00E0EB32 /* RxRelay.xcframework in Frameworks */,
 				7C05CA722E1E1A5200F2D1E2 /* RxSwift.xcframework in Frameworks */,
 				7C749E322E486C7900E0EB32 /* RxCocoa.xcframework in Frameworks */,
@@ -101,6 +103,7 @@
 			);
 			name = Splitza;
 			packageProductDependencies = (
+				7CF05BA62E62B5F9007857A1 /* Supabase */,
 			);
 			productName = Splitza;
 			productReference = 7C05CA362E1E15E100F2D1E2 /* Splitza.app */;
@@ -130,6 +133,9 @@
 			);
 			mainGroup = 7C05CA2D2E1E15E100F2D1E2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7CF05BA52E62B5F9007857A1 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7C05CA372E1E15E100F2D1E2 /* Products */;
 			projectDirPath = "";
@@ -188,6 +194,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -368,6 +375,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7CF05BA52E62B5F9007857A1 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.31.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7CF05BA62E62B5F9007857A1 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7CF05BA52E62B5F9007857A1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7C05CA2E2E1E15E100F2D1E2 /* Project object */;
 }
