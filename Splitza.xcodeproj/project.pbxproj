@@ -14,6 +14,8 @@
 		7CF05BBF2E62E244007857A1 /* RxSwift.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		7CF05BC02E62E266007857A1 /* RxCocoa.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */; };
 		7CF05BC12E62E266007857A1 /* RxCocoa.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7CF05BD82E634D76007857A1 /* SnapKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CF05BD72E634D76007857A1 /* SnapKit.xcframework */; };
+		7CF05BD92E634D76007857A1 /* SnapKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7CF05BD72E634D76007857A1 /* SnapKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,6 +25,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				7CF05BD92E634D76007857A1 /* SnapKit.xcframework in Embed Frameworks */,
 				7CF05BBA2E62E207007857A1 /* RxRelay.xcframework in Embed Frameworks */,
 				7CF05BBF2E62E244007857A1 /* RxSwift.xcframework in Embed Frameworks */,
 				7CF05BC12E62E266007857A1 /* RxCocoa.xcframework in Embed Frameworks */,
@@ -37,6 +40,7 @@
 		7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxSwift.xcframework; path = Carthage/Build/RxSwift.xcframework; sourceTree = "<group>"; };
 		7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxCocoa.xcframework; path = Carthage/Build/RxCocoa.xcframework; sourceTree = "<group>"; };
 		7C749E352E48716B00E0EB32 /* RxRelay.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:272EB7D3H3:Shai Mishali"; lastKnownFileType = wrapper.xcframework; name = RxRelay.xcframework; path = Carthage/Build/RxRelay.xcframework; sourceTree = "<group>"; };
+		7CF05BD72E634D76007857A1 /* SnapKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = SnapKit.xcframework; path = Carthage/Build/SnapKit.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -69,6 +73,7 @@
 				7CF05BC02E62E266007857A1 /* RxCocoa.xcframework in Frameworks */,
 				7CF05BBE2E62E244007857A1 /* RxSwift.xcframework in Frameworks */,
 				7CF05BB92E62E207007857A1 /* RxRelay.xcframework in Frameworks */,
+				7CF05BD82E634D76007857A1 /* SnapKit.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +100,7 @@
 		7C05CA702E1E1A5100F2D1E2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7CF05BD72E634D76007857A1 /* SnapKit.xcframework */,
 				7C749E352E48716B00E0EB32 /* RxRelay.xcframework */,
 				7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */,
 				7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */,

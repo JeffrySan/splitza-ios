@@ -14,12 +14,14 @@ final class AddBillViewModel {
 	// MARK: - Dependencies
 	
 	private let repository: SplitBillRepository
+	private let participantManager: ParticipantManagerProtocol
 	let disposeBag = DisposeBag()
 	
 	// MARK: - Form Data Relays
 	
 	let titleRelay = BehaviorRelay<String>(value: "")
 	let amountRelay = BehaviorRelay<String>(value: "")
+	let manualTotalAmountRelay = BehaviorRelay<Double>(value: 0.0)
 	let locationRelay = BehaviorRelay<String>(value: "")
 	let descriptionRelay = BehaviorRelay<String>(value: "")
 	let currencyRelay = BehaviorRelay<String>(value: "USD")
@@ -36,20 +38,44 @@ final class AddBillViewModel {
 	var isFormValid: Observable<Bool> {
 		return Observable.combineLatest(
 			titleRelay.asObservable(),
-			amountRelay.asObservable(),
-			participantsRelay.asObservable()
-		) { title, amount, participants in
-			return !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-				   !amount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-				   Double(amount) != nil &&
-				   !participants.isEmpty &&
-				   participants.allSatisfy { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+			participantsRelay.asObservable(),
+			manualTotalAmountRelay.asObservable(),
+			isAmountBalanced
+		) { title, participants, manualTotal, isBalanced in
+			let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+			let hasValidTotal = manualTotal > 0
+			let hasValidParticipants = !participants.isEmpty && participants.allSatisfy { participant in
+				let hasName = !participant.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+				let hasValidAmount = !participant.amount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && 
+									 Double(participant.amount) != nil && 
+									 (Double(participant.amount) ?? 0) > 0
+				return hasName && hasValidAmount
+			}
+			return hasTitle && hasValidTotal && hasValidParticipants && isBalanced
 		}
 	}
 	
 	var totalAmount: Observable<Double> {
-		return amountRelay.asObservable()
-			.map { Double($0) ?? 0.0 }
+		return participantsRelay.asObservable()
+			.map { participants in
+				return participants.compactMap { Double($0.amount) }.reduce(0, +)
+			}
+	}
+	
+	var distributedAmount: Observable<Double> {
+		return participantsRelay.asObservable()
+			.map { participants in
+				return participants.compactMap { Double($0.amount) }.reduce(0, +)
+			}
+	}
+	
+	var isAmountBalanced: Observable<Bool> {
+		return Observable.combineLatest(
+			manualTotalAmountRelay.asObservable(),
+			distributedAmount
+		) { manualTotal, distributed in
+			return abs(manualTotal - distributed) < 0.01 // Allow for small rounding differences
+		}
 	}
 	
 	var participantCount: Observable<Int> {
@@ -65,16 +91,37 @@ final class AddBillViewModel {
 	
 	// MARK: - Initialization
 	
-	init(repository: SplitBillRepository = SplitBillRepository(dataSourceType: .remote)) {
+	init(repository: SplitBillRepository = SplitBillRepository(dataSourceType: .remote),
+		 participantManager: ParticipantManagerProtocol = ParticipantManager()) {
 		self.repository = repository
+		self.participantManager = participantManager
 	}
 	
 	// MARK: - Participant Management
 	
+	func getSavedParticipants() -> [SavedParticipant] {
+		return participantManager.getAllParticipants()
+	}
+	
+	func searchSavedParticipants(query: String) -> [SavedParticipant] {
+		return participantManager.searchParticipants(with: query)
+	}
+	
 	func addParticipant() {
 		var participants = participantsRelay.value
-		participants.append(ParticipantInput(name: "", email: ""))
+		participants.append(ParticipantInput(name: "", email: "", amount: ""))
 		participantsRelay.accept(participants)
+	}
+	
+	func addSavedParticipant(_ savedParticipant: SavedParticipant) {
+		var participants = participantsRelay.value
+		participants.append(ParticipantInput(
+			name: savedParticipant.name,
+			email: savedParticipant.email ?? "",
+			amount: ""
+		))
+		participantsRelay.accept(participants)
+		participantManager.updateLastUsedDate(for: savedParticipant.id)
 	}
 	
 	func removeParticipant(at index: Int) {
@@ -84,11 +131,31 @@ final class AddBillViewModel {
 		participantsRelay.accept(participants)
 	}
 	
-	func updateParticipant(at index: Int, name: String, email: String) {
+	func updateParticipant(at index: Int, name: String, email: String?, amount: String) {
 		var participants = participantsRelay.value
 		guard index < participants.count else { return }
-		participants[index] = ParticipantInput(name: name, email: email)
+		participants[index] = ParticipantInput(name: name, email: email, amount: amount)
 		participantsRelay.accept(participants)
+	}
+	
+	func distributeAmountEqually() {
+		let totalAmount = manualTotalAmountRelay.value
+		let participants = participantsRelay.value
+		
+		guard totalAmount > 0 && !participants.isEmpty else { return }
+		
+		let amountPerPerson = totalAmount / Double(participants.count)
+		let formattedAmount = String(format: "%.2f", amountPerPerson)
+		
+		let updatedParticipants = participants.map { participant in
+			ParticipantInput(
+				name: participant.name,
+				email: participant.email,
+				amount: formattedAmount
+			)
+		}
+		
+		participantsRelay.accept(updatedParticipants)
 	}
 	
 	// MARK: - Bill Creation
@@ -97,35 +164,51 @@ final class AddBillViewModel {
 		guard !isLoadingRelay.value else { return }
 		
 		let title = titleRelay.value.trimmingCharacters(in: .whitespacesAndNewlines)
-		let amountString = amountRelay.value.trimmingCharacters(in: .whitespacesAndNewlines)
 		let location = locationRelay.value.trimmingCharacters(in: .whitespacesAndNewlines)
 		let description = descriptionRelay.value.trimmingCharacters(in: .whitespacesAndNewlines)
 		let currency = currencyRelay.value
 		let participantInputs = participantsRelay.value
-		
-		guard let totalAmount = Double(amountString) else {
-			errorRelay.accept(AddBillError.invalidAmount)
-			return
-		}
 		
 		guard !participantInputs.isEmpty else {
 			errorRelay.accept(AddBillError.noParticipants)
 			return
 		}
 		
+		// Validate all participants have valid amounts
+		let invalidParticipants = participantInputs.filter { input in
+			guard let amount = Double(input.amount), amount > 0 else { return true }
+			return input.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+		}
+		
+		guard invalidParticipants.isEmpty else {
+			errorRelay.accept(AddBillError.invalidParticipantData)
+			return
+		}
+		
 		isLoadingRelay.accept(true)
 		
-		// Calculate amount per participant
-		let amountPerParticipant = totalAmount / Double(participantInputs.count)
-		
-		// Create participants
-		let participants = participantInputs.map { input in
-			Participant(
-				name: input.name.trimmingCharacters(in: .whitespacesAndNewlines),
-				email: input.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : input.email.trimmingCharacters(in: .whitespacesAndNewlines),
-				amountOwed: amountPerParticipant
+		// Create participants with individual amounts
+		let participants = participantInputs.compactMap { input -> Participant? in
+			guard let amount = Double(input.amount), amount > 0 else { return nil }
+			let trimmedName = input.name.trimmingCharacters(in: .whitespacesAndNewlines)
+			let trimmedEmail = (input.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+			
+			// Save participant for future use
+			let savedParticipant = SavedParticipant(
+				name: trimmedName,
+				email: trimmedEmail.isEmpty ? nil : trimmedEmail
+			)
+			participantManager.saveParticipant(savedParticipant)
+			
+			return Participant(
+				name: trimmedName,
+				email: trimmedEmail.isEmpty ? nil : trimmedEmail,
+				amountOwed: amount
 			)
 		}
+		
+		// Use the manual total amount entered by user
+		let totalAmount = manualTotalAmountRelay.value
 		
 		// Create split bill
 		let splitBill = SplitBill(
@@ -152,15 +235,49 @@ final class AddBillViewModel {
 			.disposed(by: disposeBag)
 	}
 	
-	// MARK: - Form Reset
+	// MARK: - Actions
 	
-	func resetForm() {
-		titleRelay.accept("")
-		amountRelay.accept("")
-		locationRelay.accept("")
-		descriptionRelay.accept("")
-		currencyRelay.accept("USD")
-		participantsRelay.accept([])
+	func saveBill() {
+		isLoadingRelay.accept(true)
+		
+		// Create SplitBill from current data
+		let splitBill = SplitBill(
+			title: titleRelay.value,
+			totalAmount: manualTotalAmountRelay.value,
+			date: Date(),
+			location: locationRelay.value,
+			participants: [],
+			currency: currencyRelay.value,
+			description: descriptionRelay.value
+		)
+		
+		// Save bill using repository
+		repository.createSplitBill(splitBill)
+			.observe(on: MainScheduler.instance)
+			.subscribe(
+				onNext: { [weak self] savedBill in
+					// Save participants to UserDefaults for future use
+					let participants = self?.participantsRelay.value ?? []
+					for participant in participants {
+						if !participant.name.isEmpty {
+							let savedParticipant = SavedParticipant(
+								id: UUID().uuidString,
+								name: participant.name,
+								email: participant.email
+							)
+							self?.participantManager.saveParticipant(savedParticipant)
+						}
+					}
+					
+					self?.isLoadingRelay.accept(false)
+					self?.successRelay.accept(savedBill)
+				},
+				onError: { [weak self] error in
+					self?.isLoadingRelay.accept(false)
+					self?.errorRelay.accept(error)
+				}
+			)
+			.disposed(by: disposeBag)
 	}
 }
 
@@ -168,12 +285,20 @@ final class AddBillViewModel {
 
 struct ParticipantInput {
 	let name: String
-	let email: String
+	let email: String?
+	let amount: String // Individual amount as string for UI input
+	
+	init(name: String, email: String?, amount: String = "") {
+		self.name = name
+		self.email = email
+		self.amount = amount
+	}
 }
 
 enum AddBillError: LocalizedError {
 	case invalidAmount
 	case noParticipants
+	case invalidParticipantData
 	case networkError
 	
 	var errorDescription: String? {
@@ -182,6 +307,8 @@ enum AddBillError: LocalizedError {
 			return "Please enter a valid amount"
 		case .noParticipants:
 			return "Please add at least one participant"
+		case .invalidParticipantData:
+			return "Please ensure all participants have valid names and amounts"
 		case .networkError:
 			return "Network error occurred. Please try again."
 		}

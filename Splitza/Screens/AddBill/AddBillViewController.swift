@@ -6,154 +6,54 @@
 //
 
 import UIKit
+import SnapKit
 import RxSwift
 import RxRelay
 
 final class AddBillViewController: UIViewController {
 	
 	// MARK: - Properties
-	
 	private let viewModel: AddBillViewModel
 	private let disposeBag = DisposeBag()
+	private var selectedParticipantIndex: Int?
 	
 	// MARK: - UI Components
 	
 	private lazy var scrollView: UIScrollView = {
 		let scrollView = UIScrollView()
 		scrollView.showsVerticalScrollIndicator = false
-		scrollView.translatesAutoresizingMaskIntoConstraints = false
 		return scrollView
 	}()
 	
 	private lazy var contentView: UIView = {
 		let view = UIView()
-		view.translatesAutoresizingMaskIntoConstraints = false
 		return view
 	}()
 	
-	private lazy var headerView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .systemBackground
-		view.translatesAutoresizingMaskIntoConstraints = false
-		return view
+	private lazy var headerView: AddBillHeaderView = AddBillHeaderView()
+	private lazy var detailsView: AddBillDetailsView = AddBillDetailsView()
+	private lazy var totalAmountView: AddBillTotalAmountView = AddBillTotalAmountView()
+	private lazy var participantsView: AddBillParticipantsView = {
+		let addBillParticipantsView = AddBillParticipantsView(frame: .zero, viewModel: viewModel)
+		
+		addBillParticipantsView.didSelectParticipants = { [weak self] index in
+			
+			guard let self else {
+				return
+			}
+			
+			self.selectedParticipantIndex = index
+			
+			let selectionVC = ParticipantSelectionViewController(viewModel: viewModel, indexCaller: index)
+			let navController = UINavigationController(rootViewController: selectionVC)
+			
+			self.present(navController, animated: true)
+		}
+		
+		return addBillParticipantsView
 	}()
 	
-	private lazy var dragIndicator: UIView = {
-		let view = UIView()
-		view.backgroundColor = .tertiaryLabel
-		view.layer.cornerRadius = 2.5
-		view.translatesAutoresizingMaskIntoConstraints = false
-		return view
-	}()
-	
-	private lazy var titleLabel: UILabel = {
-		let label = UILabel()
-		label.text = "Add New Bill"
-		label.font = .systemFont(ofSize: 20, weight: .semibold)
-		label.textAlignment = .center
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
-	
-	private lazy var cancelButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.setTitle("Cancel", for: .normal)
-		button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}()
-	
-	private lazy var saveButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.setTitle("Save", for: .normal)
-		button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-		button.backgroundColor = .systemBlue
-		button.setTitleColor(.white, for: .normal)
-		button.setTitleColor(.systemBackground, for: .disabled)
-		button.layer.cornerRadius = 10
-		button.isEnabled = false
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}()
-	
-	// Form Fields
-	private lazy var billTitleTextField: UITextField = {
-		let textField = createTextField(placeholder: "Bill title", returnKeyType: .next)
-		return textField
-	}()
-	
-	private lazy var amountTextField: UITextField = {
-		let textField = createTextField(placeholder: "0.00", returnKeyType: .next)
-		textField.keyboardType = .decimalPad
-		return textField
-	}()
-	
-	private lazy var locationTextField: UITextField = {
-		let textField = createTextField(placeholder: "Location (optional)", returnKeyType: .next)
-		return textField
-	}()
-	
-	private lazy var descriptionTextField: UITextField = {
-		let textField = createTextField(placeholder: "Description (optional)", returnKeyType: .done)
-		return textField
-	}()
-	
-	private lazy var currencySegmentedControl: UISegmentedControl = {
-		let control = UISegmentedControl(items: ["USD", "IDR", "EUR", "GBP"])
-		control.selectedSegmentIndex = 0
-		control.backgroundColor = .systemGroupedBackground
-		control.selectedSegmentTintColor = .systemBlue
-		control.translatesAutoresizingMaskIntoConstraints = false
-		return control
-	}()
-	
-	private lazy var participantsTableView: UITableView = {
-		let tableView = UITableView(frame: .zero, style: .grouped)
-		tableView.backgroundColor = .clear
-		tableView.separatorStyle = .none
-		tableView.showsVerticalScrollIndicator = false
-		tableView.isScrollEnabled = false
-		tableView.clipsToBounds = false
-		tableView.estimatedSectionHeaderHeight = 50
-		tableView.register(ParticipantInputCell.self, forCellReuseIdentifier: ParticipantInputCell.identifier)
-		tableView.translatesAutoresizingMaskIntoConstraints = false
-		return tableView
-	}()
-	
-	private lazy var addParticipantButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.setTitle("+ Add Participant", for: .normal)
-		button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-		button.backgroundColor = .tertiarySystemGroupedBackground
-		button.setTitleColor(.systemBlue, for: .normal)
-		button.layer.cornerRadius = 10
-		button.layer.borderWidth = 1
-		button.layer.borderColor = UIColor.separator.cgColor
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}()
-	
-	private lazy var summaryView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .tertiarySystemGroupedBackground
-		view.layer.cornerRadius = 12
-		view.layer.borderWidth = 1
-		view.layer.borderColor = UIColor.separator.cgColor
-		view.translatesAutoresizingMaskIntoConstraints = false
-		return view
-	}()
-	
-	private lazy var summaryLabel: UILabel = {
-		let label = UILabel()
-		label.font = .systemFont(ofSize: 14, weight: .medium)
-		label.textColor = .secondaryLabel
-		label.numberOfLines = 0
-		label.text = "Total: $0.00 • 0 participants • $0.00 each"
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}()
-	
-	private var tableViewHeightConstraint: NSLayoutConstraint!
+	private lazy var summaryView: AddBillSummaryView = AddBillSummaryView()
 	
 	// MARK: - Initialization
 	
@@ -171,12 +71,13 @@ final class AddBillViewController: UIViewController {
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		
 		setupUI()
-		setupBindings()
 		setupKeyboardHandling()
 		
-		// Add initial participant
-		viewModel.addParticipant()
+		DispatchQueue.global(qos: .background).async { [weak self] in
+			self?.setupBindings()
+		}
 	}
 	
 	// MARK: - Setup
@@ -186,217 +87,158 @@ final class AddBillViewController: UIViewController {
 		
 		// Add subviews
 		view.addSubview(headerView)
-		headerView.addSubview(dragIndicator)
-		headerView.addSubview(titleLabel)
-		headerView.addSubview(cancelButton)
-		headerView.addSubview(saveButton)
-		
 		view.addSubview(scrollView)
 		scrollView.addSubview(contentView)
 		
-		contentView.addSubview(billTitleTextField)
-		contentView.addSubview(amountTextField)
-		contentView.addSubview(currencySegmentedControl)
-		contentView.addSubview(locationTextField)
-		contentView.addSubview(descriptionTextField)
-		contentView.addSubview(participantsTableView)
-		contentView.addSubview(addParticipantButton)
+		contentView.addSubview(detailsView)
+		contentView.addSubview(totalAmountView)
+		contentView.addSubview(participantsView)
 		contentView.addSubview(summaryView)
-		summaryView.addSubview(summaryLabel)
 		
 		setupConstraints()
-		setupTableView()
+		setupActions()
 	}
 	
 	private func setupConstraints() {
-		// Initial height should account for section header + one participant cell + padding
-		let initialHeight: CGFloat = 50 + 110 + 20 // section header + cell + padding
-		tableViewHeightConstraint = participantsTableView.heightAnchor.constraint(equalToConstant: initialHeight)
+		headerView.snp.makeConstraints { make in
+			make.top.leading.trailing.equalToSuperview()
+			make.height.equalTo(80)
+		}
 		
-		NSLayoutConstraint.activate([
-			// Header view
-			headerView.topAnchor.constraint(equalTo: view.topAnchor),
-			headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-			headerView.heightAnchor.constraint(equalToConstant: 80),
-			
-			// Drag indicator
-			dragIndicator.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 8),
-			dragIndicator.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-			dragIndicator.widthAnchor.constraint(equalToConstant: 36),
-			dragIndicator.heightAnchor.constraint(equalToConstant: 4),
-			
-			// Title label
-			titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-			titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor, constant: 8),
-			
-			// Cancel button
-			cancelButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
-			cancelButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-			
-			// Save button
-			saveButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
-			saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-			saveButton.widthAnchor.constraint(equalToConstant: 60),
-			saveButton.heightAnchor.constraint(equalToConstant: 32),
-			
-			// Scroll view
-			scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
-			scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-			scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-			
-			// Content view
-			contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-			contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-			contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-			contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-			
-			// Form fields
-			billTitleTextField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-			billTitleTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			billTitleTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			billTitleTextField.heightAnchor.constraint(equalToConstant: 50),
-			
-			amountTextField.topAnchor.constraint(equalTo: billTitleTextField.bottomAnchor, constant: 16),
-			amountTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			amountTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			amountTextField.heightAnchor.constraint(equalToConstant: 50),
-			
-			currencySegmentedControl.topAnchor.constraint(equalTo: amountTextField.bottomAnchor, constant: 16),
-			currencySegmentedControl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			currencySegmentedControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			currencySegmentedControl.heightAnchor.constraint(equalToConstant: 32),
-			
-			locationTextField.topAnchor.constraint(equalTo: currencySegmentedControl.bottomAnchor, constant: 16),
-			locationTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			locationTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			locationTextField.heightAnchor.constraint(equalToConstant: 50),
-			
-			descriptionTextField.topAnchor.constraint(equalTo: locationTextField.bottomAnchor, constant: 16),
-			descriptionTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			descriptionTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			descriptionTextField.heightAnchor.constraint(equalToConstant: 50),
-			
-			// Participants section
-			participantsTableView.topAnchor.constraint(equalTo: descriptionTextField.bottomAnchor, constant: 24),
-			participantsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-			participantsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-			tableViewHeightConstraint,
-			
-			addParticipantButton.topAnchor.constraint(equalTo: participantsTableView.bottomAnchor, constant: 16),
-			addParticipantButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			addParticipantButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			addParticipantButton.heightAnchor.constraint(equalToConstant: 44),
-			
-			// Summary view
-			summaryView.topAnchor.constraint(equalTo: addParticipantButton.bottomAnchor, constant: 24),
-			summaryView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-			summaryView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-			summaryView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-			
-			summaryLabel.topAnchor.constraint(equalTo: summaryView.topAnchor, constant: 16),
-			summaryLabel.leadingAnchor.constraint(equalTo: summaryView.leadingAnchor, constant: 16),
-			summaryLabel.trailingAnchor.constraint(equalTo: summaryView.trailingAnchor, constant: -16),
-			summaryLabel.bottomAnchor.constraint(equalTo: summaryView.bottomAnchor, constant: -16)
-		])
+		scrollView.snp.makeConstraints { make in
+			make.top.equalTo(headerView.snp.bottom)
+			make.leading.trailing.bottom.equalToSuperview()
+		}
+		
+		contentView.snp.makeConstraints { make in
+			make.edges.equalToSuperview()
+			make.width.equalToSuperview()
+		}
+		
+		detailsView.snp.makeConstraints { make in
+			make.top.equalToSuperview().offset(20)
+			make.leading.trailing.equalToSuperview().inset(16)
+		}
+		
+		totalAmountView.snp.makeConstraints { make in
+			make.top.equalTo(detailsView.snp.bottom).offset(16)
+			make.leading.trailing.equalToSuperview().inset(16)
+		}
+		
+		participantsView.snp.makeConstraints { make in
+			make.top.equalTo(totalAmountView.snp.bottom).offset(24)
+			make.leading.trailing.equalToSuperview()
+		}
+		
+		summaryView.snp.makeConstraints { make in
+			make.top.equalTo(participantsView.snp.bottom).offset(24)
+			make.leading.trailing.equalToSuperview().inset(16)
+			make.bottom.equalToSuperview().offset(-24)
+		}
 	}
 	
-	private func setupTableView() {
-		participantsTableView.dataSource = self
-		participantsTableView.delegate = self
+	private func setupActions() {
+		headerView.onCancel = { [weak self] in
+			self?.dismiss(animated: true)
+		}
+		
+		headerView.onSave = { [weak self] in
+			self?.viewModel.saveBill()
+		}
+		
+		totalAmountView.onTotalAmountChanged = { [weak self] amount in
+			self?.viewModel.manualTotalAmountRelay.accept(amount)
+		}
 	}
 	
 	private func setupBindings() {
-		// Form bindings
-		billTitleTextField.rx.text.orEmpty
+		// Form bindings - Details View
+		detailsView.titleRelay
 			.bind(to: viewModel.titleRelay)
 			.disposed(by: disposeBag)
 		
-		amountTextField.rx.text.orEmpty
-			.bind(to: viewModel.amountRelay)
-			.disposed(by: disposeBag)
-		
-		locationTextField.rx.text.orEmpty
+		detailsView.locationRelay
 			.bind(to: viewModel.locationRelay)
 			.disposed(by: disposeBag)
 		
-		descriptionTextField.rx.text.orEmpty
+		detailsView.descriptionRelay
 			.bind(to: viewModel.descriptionRelay)
 			.disposed(by: disposeBag)
 		
-		currencySegmentedControl.rx.selectedSegmentIndex
-			.map { ["USD", "IDR", "EUR", "GBP"][$0] }
+		detailsView.currencyRelay
 			.bind(to: viewModel.currencyRelay)
 			.disposed(by: disposeBag)
 		
-		// Button actions
-		cancelButton.rx.tap
-			.subscribe(onNext: { [weak self] in
-				self?.dismiss(animated: true)
-			})
+		// Total Amount View bindings
+		totalAmountView.totalAmountRelay
+			.bind(to: viewModel.manualTotalAmountRelay)
 			.disposed(by: disposeBag)
 		
-		saveButton.rx.tap
-			.subscribe(onNext: { [weak self] in
-				self?.viewModel.createBill()
-			})
+		// Currency synchronization
+		viewModel.currencyRelay
+			.bind(to: totalAmountView.currencyRelay)
 			.disposed(by: disposeBag)
 		
-		addParticipantButton.rx.tap
-			.subscribe(onNext: { [weak self] in
-				self?.viewModel.addParticipant()
-			})
+		viewModel.currencyRelay
+			.bind(to: participantsView.currencyRelay)
 			.disposed(by: disposeBag)
 		
-		// Participants changes
+		// Participants binding
 		viewModel.participantsRelay
 			.observe(on: MainScheduler.instance)
-			.subscribe(onNext: { [weak self] _ in
-				self?.updateTableViewHeight()
-				self?.participantsTableView.reloadData()
+			.subscribe(onNext: { [weak self] participants in
+				self?.participantsView.updateParticipants(participants)
 			})
 			.disposed(by: disposeBag)
 		
-		// Form validation
+		// Update distributed amount in total amount view
+		viewModel.distributedAmount
+			.observe(on: MainScheduler.instance)
+			.subscribe(onNext: { [weak self] distributedAmount in
+				self?.totalAmountView.updateDistributedAmount(distributedAmount)
+			})
+			.disposed(by: disposeBag)
+		
+		// Form validation - Save button state
 		viewModel.isFormValid
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] isValid in
-				self?.updateSaveButtonState(isEnabled: isValid)
+				self?.headerView.saveButton.isEnabled = isValid
+				self?.updateSaveButtonAppearance(isValid)
 			})
 			.disposed(by: disposeBag)
 		
 		// Summary updates
 		Observable.combineLatest(
-			viewModel.totalAmount,
-			viewModel.participantCount,
-			viewModel.amountPerParticipant,
-			viewModel.currencyRelay.asObservable()
-		) { amount, count, perPerson, currency in
-			let formatter = NumberFormatter()
-			formatter.numberStyle = .currency
-			formatter.currencyCode = currency
-			
-			let totalFormatted = formatter.string(from: NSNumber(value: amount)) ?? "\(currency) \(amount)"
-			let perPersonFormatted = formatter.string(from: NSNumber(value: perPerson)) ?? "\(currency) \(perPerson)"
-			
-			return "Total: \(totalFormatted) • \(count) participant\(count == 1 ? "" : "s") • \(perPersonFormatted) each"
+			viewModel.manualTotalAmountRelay.asObservable(),
+			viewModel.participantsRelay.asObservable(),
+			viewModel.currencyRelay.asObservable(),
+			viewModel.isAmountBalanced
+		) { totalAmount, participants, currency, isBalanced in
+			return (totalAmount, participants.count, currency, isBalanced)
 		}
-		.bind(to: summaryLabel.rx.text)
+		.observe(on: MainScheduler.instance)
+		.subscribe(onNext: { [weak self] (totalAmount, participantCount, currency, isBalanced) in
+			self?.summaryView.updateSummary(
+				totalAmount: totalAmount,
+				participantCount: participantCount,
+				currency: currency,
+				isBalanced: isBalanced
+			)
+		})
 		.disposed(by: disposeBag)
 		
 		// Loading state
 		viewModel.isLoadingRelay
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] isLoading in
-				self?.saveButton.isEnabled = !isLoading
-				self?.saveButton.setTitle(isLoading ? "Saving..." : "Save", for: .normal)
+				self?.headerView.saveButton.isEnabled = !isLoading
 			})
 			.disposed(by: disposeBag)
 		
 		// Success
 		viewModel.successRelay
+			.filter { _ in true }
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] _ in
 				self?.dismiss(animated: true)
@@ -405,6 +247,7 @@ final class AddBillViewController: UIViewController {
 		
 		// Error handling
 		viewModel.errorRelay
+			.compactMap { $0 }
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] error in
 				self?.showErrorAlert(error: error)
@@ -436,46 +279,9 @@ final class AddBillViewController: UIViewController {
 	
 	// MARK: - Helper Methods
 	
-	private func createTextField(placeholder: String, returnKeyType: UIReturnKeyType) -> UITextField {
-		let textField = UITextField()
-		textField.placeholder = placeholder
-		textField.borderStyle = .roundedRect
-		textField.backgroundColor = .tertiarySystemGroupedBackground
-		textField.layer.borderWidth = 1
-		textField.layer.borderColor = UIColor.separator.cgColor
-		textField.layer.cornerRadius = 10
-		textField.returnKeyType = returnKeyType
-		textField.translatesAutoresizingMaskIntoConstraints = false
-		return textField
-	}
-	
-	private func updateTableViewHeight() {
-		let participantCount = viewModel.participantsRelay.value.count
-		// Account for section header height (around 50pt) + cell height (110pt each) + extra padding for button
-		let sectionHeaderHeight: CGFloat = 50
-		let cellHeight: CGFloat = 110
-		let addButtonHeight: CGFloat = 50
-		let extraPadding: CGFloat = 30 // Extra space to prevent button from covering content
-		let height = sectionHeaderHeight + (CGFloat(participantCount) * cellHeight) + addButtonHeight + extraPadding
-		tableViewHeightConstraint.constant = height
-		
-		// Animate the height change
+	private func updateSaveButtonAppearance(_ isEnabled: Bool) {
 		UIView.animate(withDuration: 0.3) {
-			self.view.layoutIfNeeded()
-		}
-	}
-	
-	private func updateSaveButtonState(isEnabled: Bool) {
-		saveButton.isEnabled = isEnabled
-		
-		UIView.animate(withDuration: 0.3) {
-			if isEnabled {
-				self.saveButton.backgroundColor = .systemBlue
-				self.saveButton.alpha = 1.0
-			} else {
-				self.saveButton.backgroundColor = .systemGray4
-				self.saveButton.alpha = 0.6
-			}
+			self.headerView.saveButton.alpha = isEnabled ? 1.0 : 0.6
 		}
 	}
 	
@@ -513,85 +319,5 @@ final class AddBillViewController: UIViewController {
 		
 		alert.addAction(UIAlertAction(title: "OK", style: .default))
 		present(alert, animated: true)
-	}
-}
-
-// MARK: - UITableViewDataSource
-
-extension AddBillViewController: UITableViewDataSource {
-	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return viewModel.participantsRelay.value.count
-	}
-	
-	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-		let cell = tableView.dequeueReusableCell(withIdentifier: ParticipantInputCell.identifier, for: indexPath) as! ParticipantInputCell
-		
-		let participant = viewModel.participantsRelay.value[indexPath.row]
-		cell.configure(with: participant)
-		cell.delegate = self
-		
-		return cell
-	}
-}
-
-// MARK: - UITableViewDelegate
-
-extension AddBillViewController: UITableViewDelegate {
-	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-		return 110
-	}
-	
-	func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-		return "Participants"
-	}
-	
-	func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-		return 50
-	}
-	
-	func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-		let headerView = UIView()
-		headerView.backgroundColor = .clear
-		
-		let titleLabel = UILabel()
-		titleLabel.text = "Participants"
-		titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
-		titleLabel.textColor = .label
-		titleLabel.translatesAutoresizingMaskIntoConstraints = false
-		
-		headerView.addSubview(titleLabel)
-		NSLayoutConstraint.activate([
-			titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
-			titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8)
-		])
-		
-		return headerView
-	}
-}
-
-// MARK: - ParticipantInputCellDelegate
-
-extension AddBillViewController: ParticipantInputCellDelegate {
-	func participantCell(_ cell: ParticipantInputCell, didUpdateName name: String, email: String) {
-		guard let indexPath = participantsTableView.indexPath(for: cell) else { return }
-		viewModel.updateParticipant(at: indexPath.row, name: name, email: email)
-	}
-	
-	func participantCellDidRequestRemoval(_ cell: ParticipantInputCell) {
-		guard let indexPath = participantsTableView.indexPath(for: cell) else { return }
-		
-		// Don't allow removing the last participant
-		guard viewModel.participantsRelay.value.count > 1 else {
-			let alert = UIAlertController(
-				title: "Cannot Remove",
-				message: "At least one participant is required.",
-				preferredStyle: .alert
-			)
-			alert.addAction(UIAlertAction(title: "OK", style: .default))
-			present(alert, animated: true)
-			return
-		}
-		
-		viewModel.removeParticipant(at: indexPath.row)
 	}
 }
