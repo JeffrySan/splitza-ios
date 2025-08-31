@@ -144,7 +144,6 @@ final class AddBillParticipantsView: UIView {
 	
 	private func setupTableView() {
 		tableView.dataSource = self
-		tableView.delegate = self
 	}
 	
 	private func setupBindings() {
@@ -152,8 +151,7 @@ final class AddBillParticipantsView: UIView {
 		participantsRelay
 			.observe(on: MainScheduler.instance)
 			.subscribe(onNext: { [weak self] participants in
-				self?.tableView.reloadData()
-				self?.updateTableViewHeight(for: participants.count)
+				self?.updateTableViewSafely(with: participants)
 			})
 			.disposed(by: disposeBag)
 		
@@ -208,6 +206,51 @@ final class AddBillParticipantsView: UIView {
 		impactFeedback.impactOccurred()
 	}
 	
+	private func updateTableViewSafely(with participants: [ParticipantInput]) {
+		// Handle empty data case safely
+		if participants.isEmpty {
+			// For empty data, use simple reloadData
+			tableView.reloadData()
+			updateTableViewHeight(for: 0)
+			return
+		}
+		
+		// Safely check current row count with section validation
+		let currentRowCount: Int
+		if tableView.numberOfSections > 0 {
+			currentRowCount = tableView.numberOfRows(inSection: 0)
+		} else {
+			currentRowCount = 0
+		}
+		
+		let newRowCount = participants.count
+		
+		print("[Debug] Current rows: \(currentRowCount), New rows: \(newRowCount)")
+		
+		if currentRowCount == 0 && newRowCount > 0 {
+			// First time adding data - use reloadData with async update
+			print("[Debug] Using reloadData for first-time data")
+			tableView.reloadData()
+			DispatchQueue.main.async { [weak self] in
+				self?.updateTableViewHeight(for: participants.count)
+			}
+		} else if currentRowCount > 0 {
+			// Safe to use performBatchUpdates when we have existing data
+			print("[Debug] Using performBatchUpdates for existing data")
+			
+			tableView.performBatchUpdates({
+				tableView.reloadData()
+			}) { [weak self] _ in
+				self?.updateTableViewHeight(for: participants.count)
+			}
+		} else {
+			// Fallback to simple reload
+			print("[Debug] Using fallback reloadData")
+			tableView.reloadData()
+			updateTableViewHeight(for: participants.count)
+		}
+	}
+
 	private func updateTableViewHeight(for participantCount: Int) {
 		let cellHeight: CGFloat = 120
 		
@@ -241,6 +284,10 @@ final class AddBillParticipantsView: UIView {
 // MARK: - UITableViewDataSource
 
 extension AddBillParticipantsView: UITableViewDataSource {
+	func numberOfSections(in tableView: UITableView) -> Int {
+		return 1
+	}
+	
 	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 		return participantsRelay.value.count
 	}
@@ -258,16 +305,7 @@ extension AddBillParticipantsView: UITableViewDataSource {
 	}
 }
 
-// MARK: - UITableViewDelegate
-
-extension AddBillParticipantsView: UITableViewDelegate {
-	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-		return UITableView.automaticDimension
-	}
-}
-
 // MARK: - ImprovedParticipantInputCellDelegate
-
 extension AddBillParticipantsView: ImprovedParticipantInputCellDelegate {
 	func participantCell(_ cell: ImprovedParticipantInputCell, didUpdateName name: String, email: String, amount: String) {
 		guard let indexPath = tableView.indexPath(for: cell) else { return }
