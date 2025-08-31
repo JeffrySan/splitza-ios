@@ -33,7 +33,7 @@ final class AddBillParticipantsView: UIView {
 	
 	private lazy var tableView: UITableView = {
 		let tableView = UITableView(frame: .zero, style: .plain)
-		tableView.backgroundColor = .purple
+		tableView.backgroundColor = .clear
 		tableView.separatorStyle = .none
 		tableView.showsVerticalScrollIndicator = false
 		tableView.isScrollEnabled = false
@@ -207,48 +207,19 @@ final class AddBillParticipantsView: UIView {
 	}
 	
 	private func updateTableViewSafely(with participants: [ParticipantInput]) {
-		// Handle empty data case safely
-		if participants.isEmpty {
-			// For empty data, use simple reloadData
-			tableView.reloadData()
-			updateTableViewHeight(for: 0)
-			return
-		}
+		print("[Debug] Updating table with \(participants.count) participants")
 		
-		// Safely check current row count with section validation
-		let currentRowCount: Int
-		if tableView.numberOfSections > 0 {
-			currentRowCount = tableView.numberOfRows(inSection: 0)
-		} else {
-			currentRowCount = 0
-		}
+		// Always use simple reloadData - it's the safest approach
+		tableView.reloadData()
 		
-		let newRowCount = participants.count
+		// Option 1: Force layout immediately (synchronous)
+		tableView.layoutIfNeeded()
+		updateTableViewHeight(for: participants.count)
 		
-		print("[Debug] Current rows: \(currentRowCount), New rows: \(newRowCount)")
-		
-		if currentRowCount == 0 && newRowCount > 0 {
-			// First time adding data - use reloadData with async update
-			print("[Debug] Using reloadData for first-time data")
-			tableView.reloadData()
-			DispatchQueue.main.async { [weak self] in
-				self?.updateTableViewHeight(for: participants.count)
-			}
-		} else if currentRowCount > 0 {
-			// Safe to use performBatchUpdates when we have existing data
-			print("[Debug] Using performBatchUpdates for existing data")
-			
-			tableView.performBatchUpdates({
-				tableView.reloadData()
-			}) { [weak self] _ in
-				self?.updateTableViewHeight(for: participants.count)
-			}
-		} else {
-			// Fallback to simple reload
-			print("[Debug] Using fallback reloadData")
-			tableView.reloadData()
-			updateTableViewHeight(for: participants.count)
-		}
+		// Option 2: Use async for smoother performance (asynchronous)
+		// DispatchQueue.main.async { [weak self] in
+		//     self?.updateTableViewHeight(for: participants.count)
+		// }
 	}
 
 	private func updateTableViewHeight(for participantCount: Int) {
