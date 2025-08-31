@@ -74,7 +74,7 @@ final class AddBillV2ViewController: UIViewController {
 	
 	private lazy var totalAmountLabel: UILabel = {
 		let label = UILabel()
-		label.text = "Total: $0.00"
+		label.text = "Total: \(0.0.formattedCurrency(currencyCode: viewModel.currencyRelay.value))"
 		label.font = .systemFont(ofSize: 16, weight: .medium)
 		label.textColor = .systemBlue
 		return label
@@ -446,7 +446,7 @@ final class AddBillV2ViewController: UIViewController {
 	}
 	
 	private func updateTotalAmount(_ amount: Double) {
-		totalAmountLabel.text = "Total: $\(String(format: "%.2f", amount))"
+		totalAmountLabel.text = "Total: \(amount.formattedCurrency(currencyCode: viewModel.currencyRelay.value))"
 	}
 	
 	private func updateSummary(_ totals: [String: Double]) {

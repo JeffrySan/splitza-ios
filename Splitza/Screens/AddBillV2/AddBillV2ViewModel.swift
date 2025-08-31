@@ -184,7 +184,7 @@ final class AddBillV2ViewModel {
 		titleRelay.accept("")
 		locationRelay.accept("")
 		descriptionRelay.accept("")
-		currencyRelay.accept("USD")
+		currencyRelay.accept("IDR")
 		
 		// Reset to default "Me" participant
 		let defaultParticipant = BillParticipant(name: "Me", email: "")

@@ -19,6 +19,7 @@ final class MenuItemCell: UITableViewCell {
 	
 	private var menuItem: MenuItem?
 	private var participants: [BillParticipant] = []
+	private var currency: String = "IDR"
 	
 	// Closures instead of delegate
 	var onTitleChanged: ((String) -> Void)?
@@ -56,14 +57,6 @@ final class MenuItemCell: UITableViewCell {
 		textField.borderStyle = .none
 		textField.textAlignment = .left
 		return textField
-	}()
-	
-	private lazy var currencyLabel: UILabel = {
-		let label = UILabel()
-		label.text = "$"
-		label.font = .systemFont(ofSize: 14, weight: .regular)
-		label.textColor = .label
-		return label
 	}()
 	
 	private lazy var participantsButton: UIButton = {
@@ -150,7 +143,6 @@ final class MenuItemCell: UITableViewCell {
 		
 		contentView.addSubview(containerView)
 		containerView.addSubview(titleTextField)
-		containerView.addSubview(currencyLabel)
 		containerView.addSubview(priceTextField)
 		containerView.addSubview(participantsButton)
 		containerView.addSubview(removeButton)
@@ -174,16 +166,11 @@ final class MenuItemCell: UITableViewCell {
 			make.height.equalTo(24)
 		}
 		
-		currencyLabel.snp.makeConstraints { make in
-			make.leading.equalToSuperview().offset(16)
-			make.bottom.equalToSuperview().offset(-12)
-			make.width.equalTo(20)
-		}
-		
 		priceTextField.snp.makeConstraints { make in
-			make.leading.equalTo(currencyLabel.snp.trailing).offset(4)
-			make.centerY.equalTo(currencyLabel)
-			make.width.equalTo(80)
+			make.top.equalTo(titleTextField.snp.bottom).offset(4)
+			make.leading.equalToSuperview().offset(16)
+			make.trailing.equalTo(participantsButton.snp.leading).offset(-8)
+			make.width.greaterThanOrEqualTo(80)
 			make.height.equalTo(24)
 		}
 		
@@ -191,7 +178,7 @@ final class MenuItemCell: UITableViewCell {
 			make.trailing.equalToSuperview().offset(-16)
 			make.centerY.equalToSuperview()
 			make.height.equalTo(40)
-			make.width.greaterThanOrEqualTo(40)
+			make.width.equalTo(40)
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
@@ -217,10 +204,10 @@ final class MenuItemCell: UITableViewCell {
 	func configure(with menuItem: MenuItem, participants: [BillParticipant], currency: String) {
 		self.menuItem = menuItem
 		self.participants = participants
+		self.currency = currency
 		
 		titleTextField.text = menuItem.title
-		priceTextField.text = menuItem.price > 0 ? String(format: "%.2f", menuItem.price) : ""
-		currencyLabel.text = getCurrencySymbol(for: currency)
+		priceTextField.text = menuItem.price.formattedCurrency(currencyCode: currency)
 		
 		updateParticipantsUI()
 	}
@@ -235,6 +222,8 @@ final class MenuItemCell: UITableViewCell {
 	@objc private func priceChanged() {
 		guard let priceText = priceTextField.text,
 			  let price = Double(priceText) else { return }
+		
+		priceTextField.text = price.formattedCurrency(currencyCode: currency)
 		onPriceChanged?(price)
 	}
 	
@@ -341,16 +330,5 @@ final class MenuItemCell: UITableViewCell {
 		}
 		
 		return containerView
-	}
-	
-	private func getCurrencySymbol(for currency: String) -> String {
-		switch currency {
-		case "USD": return "$"
-		case "EUR": return "€"
-		case "GBP": return "£"
-		case "JPY": return "¥"
-		case "IDR": return "Rp"
-		default: return currency
-		}
 	}
 }
