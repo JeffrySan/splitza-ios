@@ -58,28 +58,37 @@ final class MenuItemCell: UITableViewCell {
 		return textField
 	}()
 	
-	private lazy var participantsButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.backgroundColor = .clear
-		button.layer.cornerRadius = 8
-		return button
+	
+	private lazy var participantsLabel: UILabel = {
+		let label = UILabel()
+		label.text = "Sharing with"
+		label.font = .systemFont(ofSize: 14, weight: .medium)
+		label.textColor = .systemBlue
+		label.textAlignment = .left
+		return label
 	}()
 	
 	private lazy var participantsStackView: UIStackView = {
 		let stack = UIStackView()
 		stack.axis = .horizontal
-		stack.spacing = -4 // Overlapping effect
+		stack.spacing = 6 // Slightly increased spacing for better visibility
 		stack.alignment = .center
-		stack.distribution = .fill
+		stack.distribution = .fill // Changed to fill for better control of element sizes
 		return stack
 	}()
 	
 	private lazy var addParticipantView: UIView = {
 		let view = UIView()
-		view.backgroundColor = .systemGray5
-		view.layer.cornerRadius = 16
+		view.backgroundColor = .systemBlue.withAlphaComponent(0.15)
+		view.layer.cornerRadius = 18 // Increased to match new participant size
 		view.layer.borderWidth = 2
-		view.layer.borderColor = UIColor.systemGray4.cgColor
+		view.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.5).cgColor
+		
+		// Add shadow for consistency with participant views
+		view.layer.shadowColor = UIColor.black.cgColor
+		view.layer.shadowOffset = CGSize(width: 0, height: 1)
+		view.layer.shadowRadius = 2
+		view.layer.shadowOpacity = 0.2
 		
 		// Make it tappable
 		view.isUserInteractionEnabled = true
@@ -87,14 +96,14 @@ final class MenuItemCell: UITableViewCell {
 		view.addGestureRecognizer(tapGesture)
 		
 		let imageView = UIImageView()
-		imageView.image = UIImage(systemName: "plus")
+		imageView.image = UIImage(systemName: "plus.circle.fill")
 		imageView.contentMode = .scaleAspectFit
-		imageView.tintColor = .systemGray2
+		imageView.tintColor = .systemBlue
 		
 		view.addSubview(imageView)
 		imageView.snp.makeConstraints { make in
 			make.center.equalToSuperview()
-			make.width.height.equalTo(16)
+			make.width.height.equalTo(20) // Increased size
 		}
 		
 		return view
@@ -127,6 +136,13 @@ final class MenuItemCell: UITableViewCell {
 	
 	// MARK: - Setup
 	
+	private lazy var participantsScrollView: UIScrollView = {
+		let scrollView = UIScrollView()
+		scrollView.showsHorizontalScrollIndicator = false
+		scrollView.showsVerticalScrollIndicator = false
+		return scrollView
+	}()
+	
 	private func setupUI() {
 		selectionStyle = .none
 		backgroundColor = .clear
@@ -134,9 +150,10 @@ final class MenuItemCell: UITableViewCell {
 		contentView.addSubview(containerView)
 		containerView.addSubview(titleTextField)
 		containerView.addSubview(priceTextField)
-		containerView.addSubview(participantsButton)
+		containerView.addSubview(participantsLabel)
+		containerView.addSubview(participantsScrollView)
 		
-		participantsButton.addSubview(participantsStackView)
+		participantsScrollView.addSubview(participantsStackView)
 		
 		setupConstraints()
 		setupActions()
@@ -145,7 +162,6 @@ final class MenuItemCell: UITableViewCell {
 	private func setupConstraints() {
 		containerView.snp.makeConstraints { make in
 			make.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16))
-			make.height.greaterThanOrEqualTo(80)
 		}
 		
 		titleTextField.snp.makeConstraints { make in
@@ -156,29 +172,42 @@ final class MenuItemCell: UITableViewCell {
 		}
 		
 		priceTextField.snp.makeConstraints { make in
-			make.top.equalTo(titleTextField.snp.bottom).offset(4)
+			make.top.equalTo(titleTextField.snp.bottom).offset(8)
 			make.leading.equalToSuperview().offset(16)
-			make.trailing.equalTo(participantsButton.snp.leading).offset(-8)
-			make.width.greaterThanOrEqualTo(80)
+			make.trailing.equalToSuperview().offset(-16)
 			make.height.equalTo(24)
 		}
 		
-		participantsButton.snp.makeConstraints { make in
+		participantsLabel.snp.makeConstraints { make in
+			make.top.equalTo(priceTextField.snp.bottom).offset(12)
+			make.leading.equalToSuperview().offset(16)
+			make.height.equalTo(16)
+		}
+		
+		participantsScrollView.snp.makeConstraints { make in
+			make.top.equalTo(participantsLabel.snp.bottom).offset(6)
+			make.leading.equalToSuperview().offset(16)
 			make.trailing.equalToSuperview().offset(-16)
-			make.centerY.equalToSuperview()
-			make.height.equalTo(40)
-			make.width.equalTo(40)
+			make.height.equalTo(44) // Fixed height for scroll view
+			make.bottom.equalToSuperview().offset(-12)
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
-			make.edges.equalToSuperview().inset(4)
+			make.edges.equalToSuperview()
+			make.height.equalTo(participantsScrollView)
+		}
+		
+		containerView.snp.makeConstraints { make in
+			make.height.greaterThanOrEqualTo(100)
 		}
 	}
 	
 	private func setupActions() {
 		titleTextField.addTarget(self, action: #selector(titleChanged), for: .editingDidEnd)
 		priceTextField.addTarget(self, action: #selector(priceChanged), for: .editingDidEnd)
-		participantsButton.addTarget(self, action: #selector(participantsButtonTapped), for: .touchUpInside)
+		
+		let tapGesture = UITapGestureRecognizer(target: self, action: #selector(participantsAreaTapped))
+		participantsScrollView.addGestureRecognizer(tapGesture)
 	}
 	
 	// MARK: - Configuration
@@ -197,19 +226,26 @@ final class MenuItemCell: UITableViewCell {
 	// MARK: - Actions
 	
 	@objc private func titleChanged() {
-		guard let title = titleTextField.text else { return }
+		
+		guard let title = titleTextField.text else {
+			return
+		}
+		
 		onTitleChanged?(title)
 	}
 	
 	@objc private func priceChanged() {
+		
 		guard let priceText = priceTextField.text,
-			  let price = Double(priceText) else { return }
+			  let price = Double(priceText) else {
+			return
+		}
 		
 		priceTextField.text = price.formattedCurrency(currencyCode: currency)
 		onPriceChanged?(price)
 	}
 	
-	@objc private func participantsButtonTapped() {
+	@objc private func participantsAreaTapped() {
 		onParticipantSelectionRequested?()
 	}
 	
@@ -220,7 +256,10 @@ final class MenuItemCell: UITableViewCell {
 	// MARK: - Private Methods
 	
 	private func updateParticipantsUI() {
-		guard let menuItem = menuItem else { return }
+		
+		guard let menuItem = menuItem else {
+			return
+		}
 		
 		// Clear existing views
 		participantsStackView.arrangedSubviews.forEach { view in
@@ -232,20 +271,85 @@ final class MenuItemCell: UITableViewCell {
 			menuItem.participantAssignments[participant.id] != nil
 		}
 		
+		// Update participants label to show count
+		if assignedParticipants.isEmpty {
+			participantsLabel.text = "Add participants"
+		} else if assignedParticipants.count == 1 {
+			participantsLabel.text = "1 participant"
+		} else {
+			participantsLabel.text = "\(assignedParticipants.count) participants"
+		}
+		
 		// Always show assigned participant bubbles (if any) then a plus button to allow adding / editing
 		for (index, participant) in assignedParticipants.enumerated() {
-			let participantView = createParticipantView(participant, shares: menuItem.participantAssignments[participant.id] ?? 1, isLast: index == assignedParticipants.count - 1)
+			let participantView = createParticipantView(participant, shares: menuItem.participantAssignments[participant.id] ?? 1)
 			participantsStackView.addArrangedSubview(participantView)
 		}
-		participantsStackView.addArrangedSubview(addParticipantView)
-		addParticipantView.snp.makeConstraints { make in
-			make.width.height.equalTo(32)
+		
+		// Create a spacer view to push addParticipantView to the right
+		if assignedParticipants.isEmpty {
+			// If no participants, just add the add button directly
+			participantsStackView.addArrangedSubview(addParticipantView)
+		} else {
+			// If there are participants, add a spacer to push the add button to the right
+			let spacerView = UIView()
+			spacerView.backgroundColor = .clear
+			participantsStackView.addArrangedSubview(spacerView)
+			participantsStackView.addArrangedSubview(addParticipantView)
+			
+			// Make spacer take up available space
+			spacerView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+			spacerView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 		}
+		
+		// Fix size for add participant view
+		addParticipantView.snp.remakeConstraints { make in
+			make.width.height.equalTo(36)
+		}
+		
+		layoutIfNeeded()
+		
+		// Remove previous constraints if they exist
+		participantsStackView.snp.removeConstraints()
+		
+		// Recreate constraints - don't constrain width explicitly
+		participantsStackView.snp.makeConstraints { make in
+			make.top.bottom.equalToSuperview()
+			make.leading.equalToSuperview()
+			// Don't constrain trailing to allow content to determine width
+			make.height.equalTo(participantsScrollView)
+		}
+		
+		// Update layout
+		setNeedsLayout()
+		layoutIfNeeded()
+		
+		// Calculate and set the content size manually for scrolling
+		let totalWidth = participantsStackView.systemLayoutSizeFitting(
+			CGSize(width: UIView.layoutFittingCompressedSize.width, 
+				  height: participantsScrollView.frame.height)
+		).width
+		
+		// Ensure the content size is at least as wide as the scroll view
+		participantsScrollView.contentSize = CGSize(
+			width: max(totalWidth, participantsScrollView.frame.width),
+			height: participantsScrollView.frame.height
+		)
 	}
 	
-	private func createParticipantView(_ participant: BillParticipant, shares: Int, isLast: Bool) -> UIView {
+	private func createParticipantView(_ participant: BillParticipant, shares: Int) -> UIView {
+		// Create a fixed size container that won't stretch
+		let containerWrapper = UIView()
+		containerWrapper.translatesAutoresizingMaskIntoConstraints = false
+		
 		let containerView = UIView()
-		containerView.backgroundColor = .systemBlue
+		containerWrapper.addSubview(containerView)
+		
+		// Use a dynamic color based on participant's name hash for variety
+		let colors: [UIColor] = [.systemBlue, .systemGreen, .systemIndigo, .systemOrange, .systemPurple, .systemTeal]
+		let colorIndex = abs(participant.abbreviatedName.hash) % colors.count
+		containerView.backgroundColor = colors[colorIndex]
+		
 		containerView.layer.cornerRadius = 16
 		containerView.layer.borderWidth = 2
 		containerView.layer.borderColor = UIColor.white.cgColor
@@ -254,11 +358,11 @@ final class MenuItemCell: UITableViewCell {
 		containerView.layer.shadowColor = UIColor.black.cgColor
 		containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
 		containerView.layer.shadowRadius = 2
-		containerView.layer.shadowOpacity = 0.1
+		containerView.layer.shadowOpacity = 0.2
 		
 		let label = UILabel()
 		label.text = participant.abbreviatedName
-		label.font = .systemFont(ofSize: 10, weight: .bold)
+		label.font = .systemFont(ofSize: 12, weight: .bold)
 		label.textColor = .white
 		label.textAlignment = .center
 		
@@ -268,11 +372,11 @@ final class MenuItemCell: UITableViewCell {
 		if shares > 1 {
 			let badgeView = UIView()
 			badgeView.backgroundColor = .systemRed
-			badgeView.layer.cornerRadius = 8
+			badgeView.layer.cornerRadius = 9
 			
 			let badgeLabel = UILabel()
 			badgeLabel.text = "\(shares)"
-			badgeLabel.font = .systemFont(ofSize: 8, weight: .bold)
+			badgeLabel.font = .systemFont(ofSize: 10, weight: .bold)
 			badgeLabel.textColor = .white
 			badgeLabel.textAlignment = .center
 			
@@ -281,7 +385,7 @@ final class MenuItemCell: UITableViewCell {
 			
 			badgeView.snp.makeConstraints { make in
 				make.top.trailing.equalToSuperview().offset(-2)
-				make.width.height.equalTo(16)
+				make.width.height.equalTo(18)
 			}
 			
 			badgeLabel.snp.makeConstraints { make in
@@ -289,20 +393,20 @@ final class MenuItemCell: UITableViewCell {
 			}
 		}
 		
-		// Constraints
+		// Set fixed size for the wrapper
+		containerWrapper.snp.makeConstraints { make in
+			make.width.height.equalTo(36)
+		}
+		
+		// Fill the wrapper with the actual container
 		containerView.snp.makeConstraints { make in
-			make.width.height.equalTo(32)
+			make.edges.equalToSuperview()
 		}
 		
 		label.snp.makeConstraints { make in
 			make.center.equalToSuperview()
 		}
 		
-		// Bring to front if it's the last one
-		if isLast {
-			containerView.layer.zPosition = 100
-		}
-		
-		return containerView
+		return containerWrapper
 	}
 }

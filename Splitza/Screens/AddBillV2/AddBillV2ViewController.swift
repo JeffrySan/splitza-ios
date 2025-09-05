@@ -98,6 +98,7 @@ final class AddBillV2ViewController: UIViewController {
 		tableView.separatorStyle = .none
 		tableView.showsVerticalScrollIndicator = false
 		tableView.isScrollEnabled = false
+		tableView.estimatedRowHeight = 100
 		tableView.register(MenuItemCell.self, forCellReuseIdentifier: MenuItemCell.identifier)
 		return tableView
 	}()
@@ -607,9 +608,6 @@ extension AddBillV2ViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 
 extension AddBillV2ViewController: UITableViewDelegate {
-	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-		return 88
-	}
 
 	// Swipe-to-delete support replacing the inline remove button
 	func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
