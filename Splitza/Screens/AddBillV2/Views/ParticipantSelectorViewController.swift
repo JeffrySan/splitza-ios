@@ -10,15 +10,11 @@ import SnapKit
 import RxSwift
 import RxRelay
 
-protocol ParticipantSelectorDelegate: AnyObject {
-	func participantSelector(_ controller: ParticipantSelectorViewController, didUpdateAssignments assignments: [String: Int])
-}
-
 final class ParticipantSelectorViewController: UIViewController {
 	
 	// MARK: - Properties
 	private let disposeBag = DisposeBag()
-	weak var delegate: ParticipantSelectorDelegate?
+	var onAssignmentsUpdated: (([String: Int]) -> Void)?
 	
 	let participants: [BillParticipant]
 	let menuItem: MenuItem
@@ -177,7 +173,7 @@ final class ParticipantSelectorViewController: UIViewController {
 	// MARK: - Actions
 	
 	@objc private func doneTapped() {
-		delegate?.participantSelector(self, didUpdateAssignments: participantAssignments)
+		onAssignmentsUpdated?(participantAssignments)
 		dismiss(animated: true)
 	}
 	
