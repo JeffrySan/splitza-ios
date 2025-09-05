@@ -277,15 +277,6 @@ final class AddBillV2ViewController: UIViewController {
 		
 		navigationItem.rightBarButtonItem = saveBarButtonItem
 	}
-
-	// MARK: - Presentation Helper
-	/// Present inside a navigation controller full screen so that the Save button (navigation item) is visible.
-	static func present(from presenter: UIViewController) {
-		let vc = AddBillV2ViewController()
-		let nav = UINavigationController(rootViewController: vc)
-		nav.modalPresentationStyle = .fullScreen
-		presenter.present(nav, animated: true)
-	}
 	
 	private func setupActions() {
 		addMenuItemButton.addTarget(self, action: #selector(addMenuItemTapped), for: .touchUpInside)
