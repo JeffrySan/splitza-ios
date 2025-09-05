@@ -540,7 +540,20 @@ final class AddBillV2ViewController: UIViewController {
 		let participants = viewModel.participantsRelay.value
 		let selectorVC = ParticipantSelectorViewController(participants: participants, menuItem: menuItem)
 		
-		selectorVC.delegate = self
+		selectorVC.onAssignmentsUpdated = { [weak self] assignments in
+			guard let self = self else { return }
+			
+			// Find the menu item and update its assignments
+			let menuItems = self.viewModel.menuItemsRelay.value
+			
+			// For simplicity, let's find by comparing attributes (in a real app, you'd pass the menu item ID)
+			if let index = menuItems.firstIndex(where: { $0.title == menuItem.title && $0.price == menuItem.price }) {
+				var updatedMenuItem = menuItems[index]
+				updatedMenuItem.participantAssignments = assignments
+				self.viewModel.updateMenuItem(at: index, with: updatedMenuItem)
+			}
+		}
+		
 		selectorVC.modalPresentationStyle = .overFullScreen
 		selectorVC.modalTransitionStyle = .crossDissolve
 		
@@ -604,21 +617,5 @@ extension AddBillV2ViewController: UITableViewDelegate {
 		}
 		deleteAction.backgroundColor = .systemRed
 		return UISwipeActionsConfiguration(actions: [deleteAction])
-	}
-}
-
-// MARK: - ParticipantSelectorDelegate
-
-extension AddBillV2ViewController: ParticipantSelectorDelegate {
-	func participantSelector(_ controller: ParticipantSelectorViewController, didUpdateAssignments assignments: [String: Int]) {
-		// Find the menu item and update its assignments
-		let menuItems = viewModel.menuItemsRelay.value
-		
-		// For simplicity, let's find by comparing assignments (in a real app, you'd pass the menu item ID)
-		if let index = menuItems.firstIndex(where: { $0.title == controller.menuItem.title && $0.price == controller.menuItem.price }) {
-			var updatedMenuItem = menuItems[index]
-			updatedMenuItem.participantAssignments = assignments
-			viewModel.updateMenuItem(at: index, with: updatedMenuItem)
-		}
 	}
 }
