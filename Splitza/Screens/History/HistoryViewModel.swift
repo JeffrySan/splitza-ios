@@ -162,7 +162,7 @@ final class HistoryViewModel {
 			.observe(on: MainScheduler.instance)
 			.subscribe(
 				onNext: { [weak self] _ in
-					// Remove from local arrays
+					
 					var currentBills = self?.splitBillsRelay.value ?? []
 					if let originalIndex = currentBills.firstIndex(where: { $0.id == splitBill.id }) {
 						currentBills.remove(at: originalIndex)

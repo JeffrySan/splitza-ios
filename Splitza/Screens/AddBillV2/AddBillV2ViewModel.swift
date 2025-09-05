@@ -86,7 +86,6 @@ final class AddBillV2ViewModel {
 		let removedParticipant = currentParticipants[index]
 		currentParticipants.remove(at: index)
 		
-		// Remove participant from all menu items
 		var currentMenuItems = menuItemsRelay.value
 		for i in 0..<currentMenuItems.count {
 			currentMenuItems[i].participantAssignments.removeValue(forKey: removedParticipant.id)
@@ -107,17 +106,22 @@ final class AddBillV2ViewModel {
 	
 	func updateMenuItem(at index: Int, with menuItem: MenuItem) {
 		var currentMenuItems = menuItemsRelay.value
-		guard index < currentMenuItems.count else { return }
 		
-		print("[Lala] Current Menu Items Before Update: \(currentMenuItems[index].title), Price: \(currentMenuItems[index].price), Assignments: \(currentMenuItems[index].participantAssignments)")
-		print("[Lala] Current Menu Items After Update: \(menuItem.title), Price: \(menuItem.price), Assignments: \(menuItem.participantAssignments)")
+		guard index < currentMenuItems.count else {
+			return
+		}
+		
 		currentMenuItems[index] = menuItem
 		menuItemsRelay.accept(currentMenuItems)
 	}
 	
 	func removeMenuItem(at index: Int) {
 		var currentMenuItems = menuItemsRelay.value
-		guard index < currentMenuItems.count else { return }
+		
+		guard index < currentMenuItems.count else {
+			return
+		}
+		
 		currentMenuItems.remove(at: index)
 		menuItemsRelay.accept(currentMenuItems)
 	}
@@ -126,7 +130,10 @@ final class AddBillV2ViewModel {
 	
 	func assignParticipant(_ participantId: String, toMenuItem itemId: String, shares: Int = 1) {
 		var currentMenuItems = menuItemsRelay.value
-		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else { return }
+		
+		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else {
+			return
+		}
 		
 		currentMenuItems[itemIndex].participantAssignments[participantId] = shares
 		menuItemsRelay.accept(currentMenuItems)

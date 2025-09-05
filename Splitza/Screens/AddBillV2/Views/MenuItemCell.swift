@@ -25,7 +25,6 @@ final class MenuItemCell: UITableViewCell {
 	var onTitleChanged: ((String) -> Void)?
 	var onPriceChanged: ((Double) -> Void)?
 	var onParticipantSelectionRequested: (() -> Void)?
-	var onRemovalRequested: (() -> Void)?
 	
 	// MARK: - UI Components
 	
@@ -101,15 +100,6 @@ final class MenuItemCell: UITableViewCell {
 		return view
 	}()
 	
-	private lazy var removeButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.setImage(UIImage(systemName: "minus.circle.fill"), for: .normal)
-		button.tintColor = .systemRed
-		button.backgroundColor = .white
-		button.layer.cornerRadius = 12
-		return button
-	}()
-	
 	// MARK: - Initialization
 	
 	override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -145,7 +135,6 @@ final class MenuItemCell: UITableViewCell {
 		containerView.addSubview(titleTextField)
 		containerView.addSubview(priceTextField)
 		containerView.addSubview(participantsButton)
-		containerView.addSubview(removeButton)
 		
 		participantsButton.addSubview(participantsStackView)
 		
@@ -162,7 +151,7 @@ final class MenuItemCell: UITableViewCell {
 		titleTextField.snp.makeConstraints { make in
 			make.top.equalToSuperview().offset(12)
 			make.leading.equalToSuperview().offset(16)
-			make.trailing.equalTo(removeButton.snp.leading).offset(-8)
+			make.trailing.equalToSuperview().offset(-16)
 			make.height.equalTo(24)
 		}
 		
@@ -184,19 +173,12 @@ final class MenuItemCell: UITableViewCell {
 		participantsStackView.snp.makeConstraints { make in
 			make.edges.equalToSuperview().inset(4)
 		}
-		
-		removeButton.snp.makeConstraints { make in
-			make.top.equalToSuperview().offset(8)
-			make.trailing.equalToSuperview().offset(-8)
-			make.width.height.equalTo(24)
-		}
 	}
 	
 	private func setupActions() {
 		titleTextField.addTarget(self, action: #selector(titleChanged), for: .editingDidEnd)
 		priceTextField.addTarget(self, action: #selector(priceChanged), for: .editingDidEnd)
 		participantsButton.addTarget(self, action: #selector(participantsButtonTapped), for: .touchUpInside)
-		removeButton.addTarget(self, action: #selector(removeButtonTapped), for: .touchUpInside)
 	}
 	
 	// MARK: - Configuration
@@ -231,10 +213,6 @@ final class MenuItemCell: UITableViewCell {
 		onParticipantSelectionRequested?()
 	}
 	
-	@objc private func removeButtonTapped() {
-		onRemovalRequested?()
-	}
-	
 	@objc private func addParticipantViewTapped() {
 		onParticipantSelectionRequested?()
 	}
@@ -254,18 +232,14 @@ final class MenuItemCell: UITableViewCell {
 			menuItem.participantAssignments[participant.id] != nil
 		}
 		
-		if assignedParticipants.isEmpty {
-			// Show add button
-			participantsStackView.addArrangedSubview(addParticipantView)
-			addParticipantView.snp.makeConstraints { make in
-				make.width.height.equalTo(32)
-			}
-		} else {
-			// Show assigned participants
-			for (index, participant) in assignedParticipants.enumerated() {
-				let participantView = createParticipantView(participant, shares: menuItem.participantAssignments[participant.id] ?? 1, isLast: index == assignedParticipants.count - 1)
-				participantsStackView.addArrangedSubview(participantView)
-			}
+		// Always show assigned participant bubbles (if any) then a plus button to allow adding / editing
+		for (index, participant) in assignedParticipants.enumerated() {
+			let participantView = createParticipantView(participant, shares: menuItem.participantAssignments[participant.id] ?? 1, isLast: index == assignedParticipants.count - 1)
+			participantsStackView.addArrangedSubview(participantView)
+		}
+		participantsStackView.addArrangedSubview(addParticipantView)
+		addParticipantView.snp.makeConstraints { make in
+			make.width.height.equalTo(32)
 		}
 	}
 	

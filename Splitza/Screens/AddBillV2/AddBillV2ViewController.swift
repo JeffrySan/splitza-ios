@@ -277,6 +277,15 @@ final class AddBillV2ViewController: UIViewController {
 		
 		navigationItem.rightBarButtonItem = saveBarButtonItem
 	}
+
+	// MARK: - Presentation Helper
+	/// Present inside a navigation controller full screen so that the Save button (navigation item) is visible.
+	static func present(from presenter: UIViewController) {
+		let vc = AddBillV2ViewController()
+		let nav = UINavigationController(rootViewController: vc)
+		nav.modalPresentationStyle = .fullScreen
+		presenter.present(nav, animated: true)
+	}
 	
 	private func setupActions() {
 		addMenuItemButton.addTarget(self, action: #selector(addMenuItemTapped), for: .touchUpInside)
@@ -322,21 +331,9 @@ final class AddBillV2ViewController: UIViewController {
 		viewModel.menuItemsRelay
 			.observe(on: MainScheduler.instance)
 			.distinctUntilChanged({ oldMenus, newMenus in
-				
-				print("[lala] Start")
-				oldMenus.forEach { menuItem in
-					print("[Lala] Old: \(menuItem.title) - \(menuItem.price) - \(menuItem.assignedParticipantIds)")
-				}
-				
-				newMenus.forEach { menuItem in
-					print("[Lala] New: \(menuItem.title) - \(menuItem.price) - \(menuItem.assignedParticipantIds)")
-				}
-				
-				print("[Lala] \(oldMenus.count) - \(newMenus.count), areEqual: \(oldMenus.count == newMenus.count)")
 				return oldMenus.count == newMenus.count
 			})
 			.subscribe(onNext: { [weak self] menuItems in
-				print("[Lala] Update Menu!")
 				self?.updateMenuItemsUI(menuItems)
 			})
 			.disposed(by: disposeBag)
@@ -408,6 +405,7 @@ final class AddBillV2ViewController: UIViewController {
 		let keyboardHeight = keyboardFrame.cgRectValue.height
 		let contentInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardHeight, right: 0)
 		
+		print("[Lala] Current Thread 2: \(Thread.current)")
 		UIView.animate(withDuration: animationDuration) {
 			self.scrollView.contentInset = contentInsets
 			self.scrollView.scrollIndicatorInsets = contentInsets
@@ -596,23 +594,6 @@ extension AddBillV2ViewController: UITableViewDataSource {
 			self.presentParticipantSelector(for: menuItem, at: indexPath)
 		}
 		
-		cell.onRemovalRequested = { [weak self] in
-			guard let self = self else { return }
-			// Confirm removal
-			let alert = UIAlertController(title: "Remove Item", message: "Are you sure you want to remove this menu item?", preferredStyle: .alert)
-			
-			let removeAction = UIAlertAction(title: "Remove", style: .destructive) { _ in
-				self.viewModel.removeMenuItem(at: indexPath.row)
-			}
-			
-			let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-			
-			alert.addAction(removeAction)
-			alert.addAction(cancelAction)
-			
-			self.present(alert, animated: true)
-		}
-		
 		return cell
 	}
 }
@@ -622,6 +603,16 @@ extension AddBillV2ViewController: UITableViewDataSource {
 extension AddBillV2ViewController: UITableViewDelegate {
 	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
 		return 88
+	}
+
+	// Swipe-to-delete support replacing the inline remove button
+	func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+		let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, completion in
+			self?.viewModel.removeMenuItem(at: indexPath.row)
+			completion(true)
+		}
+		deleteAction.backgroundColor = .systemRed
+		return UISwipeActionsConfiguration(actions: [deleteAction])
 	}
 }
 
