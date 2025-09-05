@@ -115,19 +115,6 @@ final class HistoryViewController: UIViewController {
 		presentAddBillV2ViewController()
 	}
 	
-	private func presentAddBillViewController() {
-		let addBillVC = AddBillViewController()
-		
-		addBillVC.modalTransitionStyle = .coverVertical
-		addBillVC.modalPresentationStyle = .popover
-		
-		// Add haptic feedback
-		let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-		impactFeedback.impactOccurred()
-		
-		present(addBillVC, animated: true)
-	}
-	
 	private func presentAddBillV2ViewController() {
 		
 		let addBillViewController = AddBillV2ViewController()

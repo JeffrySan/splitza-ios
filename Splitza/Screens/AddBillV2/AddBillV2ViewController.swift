@@ -31,33 +31,25 @@ final class AddBillV2ViewController: UIViewController {
 	
 	private lazy var contentView: UIView = UIView()
 	
-	private lazy var headerView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .secondarySystemGroupedBackground
-		view.layer.cornerRadius = 12
-		view.layer.borderWidth = 1
-		view.layer.borderColor = UIColor.separator.cgColor
-		return view
-	}()
-	
-	private lazy var titleTextField: UITextField = {
-		let textField = UITextField()
-		textField.placeholder = "Bill title (e.g., Lunch at Restaurant)"
-		textField.font = .systemFont(ofSize: 18, weight: .semibold)
-		textField.textColor = .label
-		textField.borderStyle = .none
-		textField.returnKeyType = .next
-		return textField
-	}()
-	
-	private lazy var locationTextField: UITextField = {
-		let textField = UITextField()
-		textField.placeholder = "Location (optional)"
-		textField.font = .systemFont(ofSize: 14, weight: .regular)
-		textField.textColor = .secondaryLabel
-		textField.borderStyle = .none
-		textField.returnKeyType = .next
-		return textField
+	private lazy var headerView: UIView = { [weak self] in
+		
+		guard let self else {
+			return UIView()
+		}
+		
+		let billHeaderView = AddBillHeaderView()
+		
+		// Title binding
+		billHeaderView.titleTextField.rx.text.orEmpty
+			.bind(to: viewModel.titleRelay)
+			.disposed(by: disposeBag)
+		
+		// Location binding
+		billHeaderView.locationTextField.rx.text.orEmpty
+			.bind(to: viewModel.locationRelay)
+			.disposed(by: disposeBag)
+		
+		return billHeaderView
 	}()
 	
 	private lazy var participantsPoolView: ParticipantsPoolView = ParticipantsPoolView(viewModel: viewModel)
@@ -98,7 +90,7 @@ final class AddBillV2ViewController: UIViewController {
 		tableView.separatorStyle = .none
 		tableView.showsVerticalScrollIndicator = false
 		tableView.isScrollEnabled = false
-		tableView.estimatedRowHeight = 100
+		tableView.rowHeight = UITableView.automaticDimension
 		tableView.register(MenuItemCell.self, forCellReuseIdentifier: MenuItemCell.identifier)
 		return tableView
 	}()
@@ -169,9 +161,6 @@ final class AddBillV2ViewController: UIViewController {
 		contentView.addSubview(addMenuItemButton)
 		contentView.addSubview(summaryView)
 		
-		headerView.addSubview(titleTextField)
-		headerView.addSubview(locationTextField)
-		
 		menuItemsHeaderView.addSubview(menuItemsLabel)
 		menuItemsHeaderView.addSubview(totalAmountLabel)
 		
@@ -196,18 +185,6 @@ final class AddBillV2ViewController: UIViewController {
 			make.top.equalToSuperview().offset(16)
 			make.leading.trailing.equalToSuperview().inset(16)
 			make.height.equalTo(80)
-		}
-		
-		titleTextField.snp.makeConstraints { make in
-			make.top.equalToSuperview().offset(12)
-			make.leading.trailing.equalToSuperview().inset(16)
-			make.height.equalTo(24)
-		}
-		
-		locationTextField.snp.makeConstraints { make in
-			make.top.equalTo(titleTextField.snp.bottom).offset(8)
-			make.leading.trailing.equalToSuperview().inset(16)
-			make.height.equalTo(20)
 		}
 		
 		participantsPoolView.snp.makeConstraints { make in
@@ -309,15 +286,6 @@ final class AddBillV2ViewController: UIViewController {
 	}
 	
 	private func setupBindings() {
-		// Title binding
-		titleTextField.rx.text.orEmpty
-			.bind(to: viewModel.titleRelay)
-			.disposed(by: disposeBag)
-		
-		// Location binding
-		locationTextField.rx.text.orEmpty
-			.bind(to: viewModel.locationRelay)
-			.disposed(by: disposeBag)
 		
 		// Menu items changes
 		viewModel.menuItemsRelay
@@ -418,10 +386,12 @@ final class AddBillV2ViewController: UIViewController {
 		// Option 1: Force layout immediately (synchronous)
 		tableView.layoutIfNeeded()
 		
-		let cellHeight: CGFloat = 88
+		let cellHeight: CGFloat = 166
+		let minTableViewHeight = menuItems.isEmpty ? 0 : cellHeight * CGFloat(menuItems.count)
 		
 		tableView.snp.updateConstraints { make in
-			make.height.equalTo(max(tableView.contentSize.height, cellHeight))
+			print("[Lala] Content Size: \(tableView.contentSize.height), Min Height: \(minTableViewHeight)")
+			make.height.equalTo(max(tableView.contentSize.height, minTableViewHeight))
 		}
 		
 		// Animate the height change
@@ -608,6 +578,10 @@ extension AddBillV2ViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 
 extension AddBillV2ViewController: UITableViewDelegate {
+	
+	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+		return UITableView.automaticDimension
+	}
 
 	// Swipe-to-delete support replacing the inline remove button
 	func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {

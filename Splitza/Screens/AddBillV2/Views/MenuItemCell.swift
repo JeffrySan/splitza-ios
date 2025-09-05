@@ -343,6 +343,7 @@ final class MenuItemCell: UITableViewCell {
 		containerWrapper.translatesAutoresizingMaskIntoConstraints = false
 		
 		let containerView = UIView()
+		containerView.backgroundColor = .yellow
 		containerWrapper.addSubview(containerView)
 		
 		// Use a dynamic color based on participant's name hash for variety
