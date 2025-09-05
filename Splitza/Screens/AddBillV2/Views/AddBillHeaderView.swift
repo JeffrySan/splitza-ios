@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 import RxRelay
 
 final class AddBillHeaderView: UIView {
@@ -13,7 +14,13 @@ final class AddBillHeaderView: UIView {
 	let titleTextField: UITextField = UITextField()
 	let locationTextField: UITextField = UITextField()
 	
-	init() {
+	private let viewModel: AddBillV2ViewModel
+	private let disposeBag = DisposeBag()
+	
+	init(viewModel: AddBillV2ViewModel) {
+		
+		self.viewModel = viewModel
+		
 		super.init(frame: .zero)
 		
 		configureContainerView()
@@ -23,6 +30,8 @@ final class AddBillHeaderView: UIView {
 		constructViewHierarchy()
 		
 		setupConstraints()
+		
+		setupBindings()
 	}
 	
 	required init?(coder: NSCoder) {
@@ -69,5 +78,17 @@ final class AddBillHeaderView: UIView {
 			make.leading.trailing.equalToSuperview().inset(16)
 			make.height.equalTo(20)
 		}
+	}
+	
+	private func setupBindings() {
+		// Title binding
+		titleTextField.rx.text.orEmpty
+			.bind(to: viewModel.titleRelay)
+			.disposed(by: disposeBag)
+		
+		// Location binding
+		locationTextField.rx.text.orEmpty
+			.bind(to: viewModel.locationRelay)
+			.disposed(by: disposeBag)
 	}
 }

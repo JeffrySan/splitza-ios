@@ -12,128 +12,134 @@ import RxRelay
 
 final class ParticipantsPoolView: UIView {
 	
+	var onAddParticipant: (() -> Void)?
+	
+	// MARK: - UI Components
+	private let headerButton: UIButton = UIButton(type: .system)
+	private let titleLabel: UILabel = UILabel()
+	private let participantCountLabel: UILabel = UILabel()
+	private let chevronImageView: UIImageView = UIImageView()
+	
+	private let collapsibleContentView: UIView = UIView()
+	private let participantsStackView: UIStackView = UIStackView()
+	private let addParticipantButton: UIButton = UIButton(type: .system)
+	
 	// MARK: - Properties
 	private let disposeBag = DisposeBag()
 	private let viewModel: AddBillV2ViewModel
 	
-	var onAddParticipant: (() -> Void)?
-	
-	// MARK: - UI Components
-	
-	private lazy var containerView: UIView = {
-		let view = UIView()
-		view.backgroundColor = .secondarySystemGroupedBackground
-		view.layer.cornerRadius = 12
-		view.layer.borderWidth = 1
-		view.layer.borderColor = UIColor.separator.cgColor
-		return view
-	}()
-	
-	private lazy var headerButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.contentHorizontalAlignment = .leading
-		button.backgroundColor = .clear
-		return button
-	}()
-	
-	private lazy var titleLabel: UILabel = {
-		let label = UILabel()
-		label.text = "Participants"
-		label.font = .systemFont(ofSize: 18, weight: .semibold)
-		label.textColor = .label
-		return label
-	}()
-	
-	private lazy var participantCountLabel: UILabel = {
-		let label = UILabel()
-		label.text = "1 person"
-		label.font = .systemFont(ofSize: 14, weight: .medium)
-		label.textColor = .secondaryLabel
-		return label
-	}()
-	
-	private lazy var chevronImageView: UIImageView = {
-		let imageView = UIImageView()
-		imageView.image = UIImage(systemName: "chevron.down")
-		imageView.contentMode = .scaleAspectFit
-		imageView.tintColor = .secondaryLabel
-		return imageView
-	}()
-	
-	private lazy var participantsStackView: UIStackView = {
-		let stack = UIStackView()
-		stack.axis = .horizontal
-		stack.spacing = 8
-		stack.alignment = .center
-		stack.distribution = .fill
-		return stack
-	}()
-	
-	private lazy var addParticipantButton: UIButton = {
-		let button = UIButton(type: .system)
-		button.setTitle("+ Add", for: .normal)
-		button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-		button.setTitleColor(.systemBlue, for: .normal)
-		button.backgroundColor = .systemBlue.withAlphaComponent(0.1)
-		button.layer.cornerRadius = 8
-		button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
-		return button
-	}()
-	
-	private lazy var collapsibleContentView: UIView = {
-		let view = UIView()
-		return view
-	}()
-	
-	// MARK: - Initialization
-	
 	init(viewModel: AddBillV2ViewModel) {
 		self.viewModel = viewModel
 		super.init(frame: .zero)
-		setupUI()
-		setupBindings()
+		
+		// Configure View
+		configureContainerView()
+		
+		configureHeaderButton()
+		configureTitleLabel()
+		configureParticipantCountLabel()
+		configureChevronImageView()
+
+		configureParticipantsStackView()
+		configureAddParticipantButton()
+		
+		// Configure View Hierarchy
+		configureViewHierarchy()
+		
+		// Configure Constraints
+		setupHeaderButtonConstraints()
+//		setupCollapsibleContainerConstraints()
+//
+//		// Configure Bindings
+//		setupBindings()
 	}
 	
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
 	
-	// MARK: - Setup
+	private func configureContainerView() {
+		translatesAutoresizingMaskIntoConstraints = false
+		backgroundColor = .secondarySystemGroupedBackground
+		layer.cornerRadius = 12
+		layer.borderWidth = 1
+		layer.borderColor = UIColor.separator.cgColor
+	}
 	
-	private func setupUI() {
-		addSubview(containerView)
-		containerView.addSubview(headerButton)
-		containerView.addSubview(collapsibleContentView)
+	private func configureHeaderButton() {
+		headerButton.contentHorizontalAlignment = .leading
+		headerButton.backgroundColor = .clear
+		headerButton.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureTitleLabel() {
+		titleLabel.text = "Participants"
+		titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+		titleLabel.textColor = .label
+		titleLabel.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureParticipantCountLabel() {
+		participantCountLabel.text = "1 person"
+		participantCountLabel.font = .systemFont(ofSize: 14, weight: .medium)
+		participantCountLabel.textColor = .secondaryLabel
+		participantCountLabel.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureChevronImageView() {
+		chevronImageView.image = UIImage(systemName: "chevron.down")
+		chevronImageView.contentMode = .scaleAspectFit
+		chevronImageView.tintColor = .secondaryLabel
+		chevronImageView.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureParticipantsStackView() {
+		participantsStackView.axis = .horizontal
+		participantsStackView.spacing = 8
+		participantsStackView.alignment = .center
+		participantsStackView.distribution = .fill
+		participantsStackView.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureAddParticipantButton() {
+		addParticipantButton.setTitle("+ Add", for: .normal)
+		addParticipantButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+		addParticipantButton.setTitleColor(.systemBlue, for: .normal)
+		addParticipantButton.backgroundColor = .systemBlue.withAlphaComponent(0.1)
+		addParticipantButton.layer.cornerRadius = 8
+		addParticipantButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
+		addParticipantButton.translatesAutoresizingMaskIntoConstraints = false
+	}
+	
+	private func configureViewHierarchy() {
+		addSubview(headerButton)
 		
 		headerButton.addSubview(titleLabel)
 		headerButton.addSubview(participantCountLabel)
 		headerButton.addSubview(chevronImageView)
 		
-		collapsibleContentView.addSubview(participantsStackView)
-		collapsibleContentView.addSubview(addParticipantButton)
-		
-		setupConstraints()
-		setupActions()
+//		addSubview(collapsibleContentView)
+//		
+//		collapsibleContentView.addSubview(participantsStackView)
+//		collapsibleContentView.addSubview(addParticipantButton)
 	}
 	
-	private func setupConstraints() {
-		containerView.snp.makeConstraints { make in
-			make.edges.equalToSuperview()
-		}
+	private func setupHeaderButtonConstraints() {
 		
 		headerButton.snp.makeConstraints { make in
-			make.top.leading.trailing.equalToSuperview()
-			make.height.equalTo(50)
+			make.top.leading.trailing.equalToSuperview().offset(8)
 		}
 		
 		titleLabel.snp.makeConstraints { make in
 			make.leading.equalToSuperview().offset(16)
 			make.centerY.equalToSuperview().offset(-4)
+			make.height.equalTo(22)
 		}
 		
 		participantCountLabel.snp.makeConstraints { make in
 			make.leading.equalTo(titleLabel)
 			make.top.equalTo(titleLabel.snp.bottom).offset(2)
+			make.height.equalTo(18)
 		}
 		
 		chevronImageView.snp.makeConstraints { make in
@@ -141,15 +147,17 @@ final class ParticipantsPoolView: UIView {
 			make.centerY.equalToSuperview()
 			make.width.height.equalTo(16)
 		}
-		
+	}
+	
+	private func setupCollapsibleContainerConstraints() {
 		collapsibleContentView.snp.makeConstraints { make in
 			make.top.equalTo(headerButton.snp.bottom)
 			make.leading.trailing.bottom.equalToSuperview()
-			make.height.equalTo(0) // Initially collapsed
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
-			make.top.equalToSuperview().offset(8)
+			make.top.equalToSuperview()
+			make.bottom.equalToSuperview().offset(-8)
 			make.leading.equalToSuperview().offset(16)
 			make.trailing.lessThanOrEqualTo(addParticipantButton.snp.leading).offset(-12)
 		}
@@ -157,7 +165,7 @@ final class ParticipantsPoolView: UIView {
 		addParticipantButton.snp.makeConstraints { make in
 			make.trailing.equalToSuperview().offset(-16)
 			make.centerY.equalTo(participantsStackView)
-			make.height.equalTo(32)
+			make.height.width.equalTo(32)
 		}
 	}
 	

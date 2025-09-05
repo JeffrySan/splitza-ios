@@ -31,27 +31,7 @@ final class AddBillV2ViewController: UIViewController {
 	
 	private lazy var contentView: UIView = UIView()
 	
-	private lazy var headerView: UIView = { [weak self] in
-		
-		guard let self else {
-			return UIView()
-		}
-		
-		let billHeaderView = AddBillHeaderView()
-		
-		// Title binding
-		billHeaderView.titleTextField.rx.text.orEmpty
-			.bind(to: viewModel.titleRelay)
-			.disposed(by: disposeBag)
-		
-		// Location binding
-		billHeaderView.locationTextField.rx.text.orEmpty
-			.bind(to: viewModel.locationRelay)
-			.disposed(by: disposeBag)
-		
-		return billHeaderView
-	}()
-	
+	private lazy var headerView: AddBillHeaderView = AddBillHeaderView(viewModel: viewModel)
 	private lazy var participantsPoolView: ParticipantsPoolView = ParticipantsPoolView(viewModel: viewModel)
 	
 	private lazy var menuItemsHeaderView: UIView = UIView()
