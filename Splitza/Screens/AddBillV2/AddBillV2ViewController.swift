@@ -321,9 +321,6 @@ final class AddBillV2ViewController: UIViewController {
 		// Menu items changes
 		viewModel.menuItemsRelay
 			.observe(on: MainScheduler.instance)
-			.distinctUntilChanged({ oldMenus, newMenus in
-				return oldMenus.count == newMenus.count
-			})
 			.subscribe(onNext: { [weak self] menuItems in
 				self?.updateMenuItemsUI(menuItems)
 			})
@@ -388,27 +385,23 @@ final class AddBillV2ViewController: UIViewController {
 	}
 	
 	@objc private func keyboardWillShow(_ notification: Notification) {
-		guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue,
-			  let animationDuration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
+		
+		guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
 			return
 		}
 		
 		let keyboardHeight = keyboardFrame.cgRectValue.height
 		let contentInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardHeight, right: 0)
 		
-		print("[Lala] Current Thread 2: \(Thread.current)")
-		UIView.animate(withDuration: animationDuration) {
+		DispatchQueue.main.async {
 			self.scrollView.contentInset = contentInsets
 			self.scrollView.scrollIndicatorInsets = contentInsets
 		}
 	}
 	
 	@objc private func keyboardWillHide(_ notification: Notification) {
-		guard let animationDuration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
-			return
-		}
 		
-		UIView.animate(withDuration: animationDuration) {
+		DispatchQueue.main.async {
 			self.scrollView.contentInset = .zero
 			self.scrollView.scrollIndicatorInsets = .zero
 		}
