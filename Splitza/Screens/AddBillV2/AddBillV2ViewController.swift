@@ -417,20 +417,29 @@ final class AddBillV2ViewController: UIViewController {
 	// MARK: - Private Methods
 	
 	private func updateMenuItemsUI(_ menuItems: [MenuItem]) {
-		// Update table height
-		let cellHeight: CGFloat = 88
-		let totalHeight = CGFloat(menuItems.count) * cellHeight
 		
-		tableView.snp.updateConstraints { make in
-			make.height.equalTo(totalHeight)
-		}
-		
-		// Reload table
+		// Always use simple reloadData - it's the safest approach
 		tableView.reloadData()
 		
-		// Animate changes
-		UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseInOut) {
-			self.view.layoutIfNeeded()
+		// Option 1: Force layout immediately (synchronous)
+		tableView.layoutIfNeeded()
+		
+		let cellHeight: CGFloat = 88
+		
+		tableView.snp.updateConstraints { make in
+			make.height.equalTo(max(tableView.contentSize.height, cellHeight))
+		}
+		
+		// Animate the height change
+		UIView.animate(
+			withDuration: 0.3,
+			delay: 0,
+			usingSpringWithDamping: 0.8,
+			initialSpringVelocity: 0.5,
+			options: .curveEaseInOut
+		) { [weak self] in
+			self?.tableView.setNeedsLayout()
+			self?.tableView.layoutIfNeeded()
 		}
 	}
 	
