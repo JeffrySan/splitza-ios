@@ -24,3 +24,16 @@ applyTo: '**'
 ## Threading
 1. Always create local dispatchQueue variables for threading.
 2. Use `DispatchQueue.global(qos: .background)` for background tasks.
+
+## UI Creation
+1. Use programmatic UI creation instead of Storyboards or XIBs.
+2. Initiate UI components on top of the class or struct.
+3. Don't use lazy var for UI components.
+4. Create `configure` method to set up UI components.
+5. Create `setupConstraints` method to set up constraints for UI components.
+6. Use SnapKit Framework for setting up constraints.
+7. Always use pattern configure view, configure view hierarchy and setup constraints.
+8. Every View should has that 3 methods and called in order, in init method preferable.
+9. Use `addSubview` to add UI components to the view hierarchy.
+10. Use `snp.makeConstraints` to set up constraints for UI components.
+11. Use `UIStackView` for arranging UI components in a linear layout.
