@@ -27,6 +27,7 @@ final class ParticipantsPoolView: UIView {
 	// MARK: - Properties
 	private let disposeBag = DisposeBag()
 	private let viewModel: AddBillV2ViewModel
+	private var heightConstraint: Constraint?
 	
 	init(viewModel: AddBillV2ViewModel) {
 		self.viewModel = viewModel
@@ -49,13 +50,24 @@ final class ParticipantsPoolView: UIView {
 		// Configure Constraints
 		setupHeaderButtonConstraints()
 		setupCollapsibleContainerConstraints()
-//
-//		// Configure Bindings
-//		setupBindings()
+
+		// Configure Bindings
+		setupBindings()
 	}
 	
 	required init?(coder: NSCoder) {
+		
+		self.viewModel = AddBillV2ViewModel()
+		super.init(coder: coder)
+		
 		fatalError("init(coder:) has not been implemented")
+	}
+	
+	override func didMoveToSuperview() {
+		super.didMoveToSuperview()
+		
+		// Setup any gesture recognizers or main thread operations here
+		setupActions()
 	}
 	
 	private func configureContainerView() {
@@ -99,7 +111,7 @@ final class ParticipantsPoolView: UIView {
 		participantsStackView.spacing = 8
 		participantsStackView.alignment = .center
 		participantsStackView.distribution = .fill
-		participantsStackView.backgroundColor = .red
+		participantsStackView.backgroundColor = .clear
 		participantsStackView.translatesAutoresizingMaskIntoConstraints = false
 	}
 	
@@ -152,10 +164,12 @@ final class ParticipantsPoolView: UIView {
 	}
 	
 	private func setupCollapsibleContainerConstraints() {
+		
 		collapsibleContentView.snp.makeConstraints { make in
-			make.top.equalTo(headerButton.snp.bottom)
+			make.top.equalTo(headerButton.snp.bottom).offset(8)
 			make.leading.trailing.equalToSuperview()
 			make.bottom.equalToSuperview().offset(-8)
+			self.heightConstraint = make.height.equalTo(0).constraint
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
@@ -257,14 +271,24 @@ final class ParticipantsPoolView: UIView {
 		let targetHeight = isCollapsed ? 0 : 60
 		let rotationAngle = isCollapsed ? 0 : CGFloat.pi
 		
-		UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseInOut) {
-			self.collapsibleContentView.snp.updateConstraints { make in
-				make.height.equalTo(targetHeight)
+		UIView.animate(
+			withDuration: 0.3,
+			delay: 0,
+			usingSpringWithDamping: 0.8,
+			initialSpringVelocity: 0.5,
+			options: .curveEaseInOut
+		) { [weak self] in
+			
+			guard let self else {
+				return
 			}
+			
+			isCollapsed ? self.heightConstraint?.activate() : self.heightConstraint?.deactivate()
 			
 			self.chevronImageView.transform = CGAffineTransform(rotationAngle: rotationAngle)
 			
 			// Hide/show content views
+			self.collapsibleContentView.isHidden = isCollapsed
 			self.collapsibleContentView.alpha = isCollapsed ? 0 : 1
 			self.participantsStackView.isHidden = isCollapsed
 			self.addParticipantButton.isHidden = isCollapsed
