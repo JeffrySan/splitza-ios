@@ -27,7 +27,6 @@ final class ParticipantsPoolView: UIView {
 	// MARK: - Properties
 	private let disposeBag = DisposeBag()
 	private let viewModel: AddBillV2ViewModel
-	private var heightConstraint: Constraint?
 	
 	init(viewModel: AddBillV2ViewModel) {
 		self.viewModel = viewModel
@@ -169,7 +168,7 @@ final class ParticipantsPoolView: UIView {
 			make.top.equalTo(headerButton.snp.bottom).offset(8)
 			make.leading.trailing.equalToSuperview()
 			make.bottom.equalToSuperview().offset(-8)
-			self.heightConstraint = make.height.equalTo(0).constraint
+			make.height.equalTo(0)
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
@@ -268,22 +267,24 @@ final class ParticipantsPoolView: UIView {
 	}
 	
 	private func updateCollapsedState(_ isCollapsed: Bool) {
-		let targetHeight = isCollapsed ? 0 : 60
+		let targetHeight = isCollapsed ? 0 : 40
 		let rotationAngle = isCollapsed ? 0 : CGFloat.pi
 		
 		UIView.animate(
-			withDuration: 0.3,
+			withDuration: 1,
 			delay: 0,
-			usingSpringWithDamping: 0.8,
-			initialSpringVelocity: 0.5,
-			options: .curveEaseInOut
+//			usingSpringWithDamping: 0.8,
+//			initialSpringVelocity: 0.5,
+			options: .curveEaseIn
 		) { [weak self] in
 			
 			guard let self else {
 				return
 			}
 			
-			isCollapsed ? self.heightConstraint?.activate() : self.heightConstraint?.deactivate()
+			self.collapsibleContentView.snp.updateConstraints { make in
+				make.height.equalTo(targetHeight)
+			}
 			
 			self.chevronImageView.transform = CGAffineTransform(rotationAngle: rotationAngle)
 			
