@@ -48,7 +48,7 @@ final class ParticipantsPoolView: UIView {
 		
 		// Configure Constraints
 		setupHeaderButtonConstraints()
-//		setupCollapsibleContainerConstraints()
+		setupCollapsibleContainerConstraints()
 //
 //		// Configure Bindings
 //		setupBindings()
@@ -75,6 +75,7 @@ final class ParticipantsPoolView: UIView {
 	private func configureTitleLabel() {
 		titleLabel.text = "Participants"
 		titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+		titleLabel.backgroundColor = .clear
 		titleLabel.textColor = .label
 		titleLabel.translatesAutoresizingMaskIntoConstraints = false
 	}
@@ -98,6 +99,7 @@ final class ParticipantsPoolView: UIView {
 		participantsStackView.spacing = 8
 		participantsStackView.alignment = .center
 		participantsStackView.distribution = .fill
+		participantsStackView.backgroundColor = .red
 		participantsStackView.translatesAutoresizingMaskIntoConstraints = false
 	}
 	
@@ -118,33 +120,33 @@ final class ParticipantsPoolView: UIView {
 		headerButton.addSubview(participantCountLabel)
 		headerButton.addSubview(chevronImageView)
 		
-//		addSubview(collapsibleContentView)
-//		
-//		collapsibleContentView.addSubview(participantsStackView)
-//		collapsibleContentView.addSubview(addParticipantButton)
+		addSubview(collapsibleContentView)
+
+		collapsibleContentView.addSubview(participantsStackView)
+		collapsibleContentView.addSubview(addParticipantButton)
 	}
 	
 	private func setupHeaderButtonConstraints() {
 		
 		headerButton.snp.makeConstraints { make in
-			make.top.leading.trailing.equalToSuperview().offset(8)
+			make.top.equalToSuperview().offset(8)
+			make.left.right.equalToSuperview()
 		}
 		
 		titleLabel.snp.makeConstraints { make in
 			make.leading.equalToSuperview().offset(16)
-			make.centerY.equalToSuperview().offset(-4)
-			make.height.equalTo(22)
+			make.top.equalToSuperview()
 		}
 		
 		participantCountLabel.snp.makeConstraints { make in
 			make.leading.equalTo(titleLabel)
 			make.top.equalTo(titleLabel.snp.bottom).offset(2)
-			make.height.equalTo(18)
+			make.bottom.equalToSuperview()
 		}
 		
 		chevronImageView.snp.makeConstraints { make in
-			make.trailing.equalToSuperview().offset(-16)
-			make.centerY.equalToSuperview()
+			make.right.equalToSuperview().offset(-8)
+			make.centerY.equalTo(headerButton)
 			make.width.height.equalTo(16)
 		}
 	}
@@ -152,13 +154,15 @@ final class ParticipantsPoolView: UIView {
 	private func setupCollapsibleContainerConstraints() {
 		collapsibleContentView.snp.makeConstraints { make in
 			make.top.equalTo(headerButton.snp.bottom)
-			make.leading.trailing.bottom.equalToSuperview()
+			make.leading.trailing.equalToSuperview()
+			make.bottom.equalToSuperview().offset(-8)
 		}
 		
 		participantsStackView.snp.makeConstraints { make in
 			make.top.equalToSuperview()
 			make.bottom.equalToSuperview().offset(-8)
 			make.leading.equalToSuperview().offset(16)
+			make.height.equalTo(40)
 			make.trailing.lessThanOrEqualTo(addParticipantButton.snp.leading).offset(-12)
 		}
 		
