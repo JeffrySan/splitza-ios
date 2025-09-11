@@ -271,10 +271,10 @@ final class ParticipantsPoolView: UIView {
 		let rotationAngle = isCollapsed ? 0 : CGFloat.pi
 		
 		UIView.animate(
-			withDuration: 1,
+			withDuration: 0.3,
 			delay: 0,
-//			usingSpringWithDamping: 0.8,
-//			initialSpringVelocity: 0.5,
+			usingSpringWithDamping: 0.8,
+			initialSpringVelocity: 0.5,
 			options: .curveEaseIn
 		) { [weak self] in
 			
@@ -294,7 +294,7 @@ final class ParticipantsPoolView: UIView {
 			self.participantsStackView.isHidden = isCollapsed
 			self.addParticipantButton.isHidden = isCollapsed
 			
-			self.layoutIfNeeded()
+//			self.layoutIfNeeded()
 		}
 	}
 }
