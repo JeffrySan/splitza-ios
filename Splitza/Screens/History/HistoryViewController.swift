@@ -59,6 +59,16 @@ final class HistoryViewController: UIViewController {
 		
 //		viewModel.loadData()
 		animateTableViewEntrance()
+		warmUpKeyboard()
+	}
+	
+	private func warmUpKeyboard() {
+		let tempTextField = UITextField(frame: .zero)
+		tempTextField.isHidden = true
+		UIApplication.shared.windows.first?.addSubview(tempTextField)
+		tempTextField.becomeFirstResponder()
+		tempTextField.resignFirstResponder()
+		tempTextField.removeFromSuperview()
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {
