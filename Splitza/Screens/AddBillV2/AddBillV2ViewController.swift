@@ -374,7 +374,6 @@ final class AddBillV2ViewController: UIViewController {
 		tableView.reloadData()
 		tableView.invalidateIntrinsicContentSize()
 		
-		let cellHeight: CGFloat = 0
 		// TODO: Search Better Approach for Dynamic Height
 		let cellHeight: CGFloat = 73.5
 		let minTableViewHeight = menuItems.isEmpty ? 0 : cellHeight * CGFloat(menuItems.count)
