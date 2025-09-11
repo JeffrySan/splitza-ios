@@ -173,7 +173,6 @@ final class ParticipantsPoolView: UIView {
 		
 		participantsStackView.snp.makeConstraints { make in
 			make.top.equalToSuperview()
-			make.bottom.equalToSuperview().offset(-8)
 			make.leading.equalToSuperview().offset(16)
 			make.height.equalTo(40)
 			make.trailing.lessThanOrEqualTo(addParticipantButton.snp.leading).offset(-12)

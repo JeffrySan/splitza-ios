@@ -116,7 +116,7 @@ final class SplitBillAPIService: SplitBillAPIServiceable {
 	}
 	
 	func getAllSplitBills(page: Int = 1, limit: Int = 20, sortBy: String? = "date", sortOrder: String? = "desc") -> Observable<SplitBillResponse> {
-		var request = SplitBillService.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
+		let request = SplitBillService.getAllSplitBills(page: page, limit: limit, sortBy: sortBy, sortOrder: sortOrder)
 		
 		// Add parameters directly to the request
 		var params: [String: Any] = [

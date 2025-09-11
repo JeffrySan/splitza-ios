@@ -113,10 +113,20 @@ final class AddBillV2ViewController: UIViewController {
 		NotificationCenter.default.removeObserver(self)
 	}
 	
-	override func viewDidLoad() {
-		super.viewDidLoad()
+	init() {
+		super.init(nibName: nil, bundle: nil)
+		
 		setupUI()
 		setupBindings()
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	override func viewDidLoad() {
+		super.viewDidLoad()
+		
 		setupActions()
 		setupKeyboardNotifications()
 	}

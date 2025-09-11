@@ -225,10 +225,6 @@ final class MenuItemCell: UITableViewCell {
 	
 	private func updateParticipantsUI() {
 		
-		guard let menuItem = menuItem else {
-			return
-		}
-		
 		clearExistingStackViews()
 		
 		let localAssignedParticipants = assignedParticipants

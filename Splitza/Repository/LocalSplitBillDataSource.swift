@@ -53,7 +53,7 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 	func settleSplitBill(id: String) -> Observable<SplitBill> {
 		let bills = manager.getAllSplitBills()
 		
-		guard var bill = bills.first(where: { $0.id == id }) else {
+		guard let bill = bills.first(where: { $0.id == id }) else {
 			return Observable.error(SplitBillRepositoryError.splitBillNotFound)
 		}
 		
