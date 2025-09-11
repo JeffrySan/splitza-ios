@@ -8,7 +8,16 @@ applyTo: '**'
 3. Keep lines shorter than 80 characters.
 4. Use comments to explain complex logic.
 5. Prevent using single line statements without braces.
-6. Prevent using single line guard statements without braces.
+6. Prevent using single line guard statements.
+```❌ Wrong
+guard let self = self else { return }
+```
+
+```✅ Right
+guard let self = self else {
+    return
+}
+```
 7. Use `guard` statements for early exits.
 8. Initiate variables with `let` by default, use `var` only when mutation is necessary.
 9. Initiate variables on top of the class or struct.
