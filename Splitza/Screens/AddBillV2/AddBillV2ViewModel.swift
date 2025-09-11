@@ -12,43 +12,50 @@ import RxRelay
 final class AddBillV2ViewModel {
 	
 	// MARK: - Properties
+	
 	private let disposeBag = DisposeBag()
 	
-	// Observables
+	// MARK: - Relays
+	
+	// Input Relays
 	let titleRelay = BehaviorRelay<String>(value: "")
 	let locationRelay = BehaviorRelay<String>(value: "")
 	let descriptionRelay = BehaviorRelay<String>(value: "")
 	let currencyRelay = BehaviorRelay<String>(value: "IDR")
 	
-	// Participants pool
+	// Data Relays
 	let participantsRelay = BehaviorRelay<[BillParticipant]>(value: [])
-	
-	// Menu items
 	let menuItemsRelay = BehaviorRelay<[MenuItem]>(value: [])
 	
-	// UI State
+	// UI State Relays
 	let isParticipantsSectionCollapsed = BehaviorRelay<Bool>(value: false)
 	let isLoadingRelay = BehaviorRelay<Bool>(value: false)
 	let errorRelay = PublishRelay<Error>()
 	let successRelay = PublishRelay<SplitBill>()
 	
-	// Computed observables
+	// MARK: - Observables
+	
 	let totalAmountObservable: Observable<Double>
 	let participantTotalsObservable: Observable<[String: Double]>
+	
+	// MARK: - State
 	
 	var selectedParticipantViewTag: Int = 0
 	// MARK: - Initialization
 	
 	init() {
 		// Add default "Me" participant
-		let defaultParticipant = BillParticipant(name: "Me", email: "")
+		let defaultParticipant = BillParticipant(
+			name: "Me",
+			email: ""
+		)
 		participantsRelay.accept([defaultParticipant])
 		
 		// Calculate total amount from all menu items
 		totalAmountObservable = menuItemsRelay
 			.map { menuItems in
-				return menuItems.reduce(0.0) { total, item in
-					return total + item.price
+				menuItems.reduce(0.0) { total, item in
+					total + item.price
 				}
 			}
 		
@@ -66,30 +73,43 @@ final class AddBillV2ViewModel {
 	}
 	
 	// MARK: - Participant Management
-	
+    
 	func addParticipant(_ participant: BillParticipant) {
 		var currentParticipants = participantsRelay.value
 		currentParticipants.append(participant)
 		participantsRelay.accept(currentParticipants)
 	}
 	
-	func updateParticipant(at index: Int, with participant: BillParticipant) {
+	func updateParticipant(
+		at index: Int,
+		with participant: BillParticipant
+	) {
 		var currentParticipants = participantsRelay.value
-		guard index < currentParticipants.count else { return }
+		
+		guard index < currentParticipants.count else {
+			return
+		}
+		
 		currentParticipants[index] = participant
 		participantsRelay.accept(currentParticipants)
 	}
 	
 	func removeParticipant(at index: Int) {
 		var currentParticipants = participantsRelay.value
-		guard index < currentParticipants.count && currentParticipants.count > 1 else { return }
+		
+		guard index < currentParticipants.count,
+			currentParticipants.count > 1 else {
+			return
+		}
 		
 		let removedParticipant = currentParticipants[index]
 		currentParticipants.remove(at: index)
 		
 		var currentMenuItems = menuItemsRelay.value
 		for i in 0..<currentMenuItems.count {
-			currentMenuItems[i].participantAssignments.removeValue(forKey: removedParticipant.id)
+			currentMenuItems[i].participantAssignments.removeValue(
+				forKey: removedParticipant.id
+			)
 		}
 		
 		participantsRelay.accept(currentParticipants)
@@ -129,20 +149,45 @@ final class AddBillV2ViewModel {
 	
 	// MARK: - Participant Assignment
 	
-	func assignParticipant(_ participantId: String, toMenuItem itemId: String, shares: Int = 1) {
-		var currentMenuItems = menuItemsRelay.value
+	func toggleParticipantForMenuItem(at index: Int) {
 		
-		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else {
+		let currentParticipants = participantsRelay.value
+		
+		guard currentParticipants.count > selectedParticipantViewTag else {
 			return
 		}
 		
-		currentMenuItems[itemIndex].participantAssignments[participantId] = shares
+		var currentMenuItems = menuItemsRelay.value
+		let selectedParticipant = currentParticipants[selectedParticipantViewTag]
+		
+		guard index < currentMenuItems.count else {
+			return
+		}
+		
+		currentMenuItems[index].toggleParticipant(selectedParticipant.id)
 		menuItemsRelay.accept(currentMenuItems)
+	}
+	
+	func isParticipantAssignedToMenuItem(at index: Int) -> Bool {
+		
+		let currentParticipants = participantsRelay.value
+		let currentMenuItemsRelay = menuItemsRelay.value
+		
+		guard currentParticipants.count > selectedParticipantViewTag,
+			  currentMenuItemsRelay.count > index else {
+			return false
+		}
+		
+		let menuItem = currentMenuItemsRelay[index]
+		
+		return menuItem.isParticipantAssigned(currentParticipants[selectedParticipantViewTag].id)
 	}
 	
 	func removeParticipantAssignment(_ participantId: String, fromMenuItem itemId: String) {
 		var currentMenuItems = menuItemsRelay.value
-		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else { return }
+		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else {
+			return
+		}
 		
 		currentMenuItems[itemIndex].participantAssignments.removeValue(forKey: participantId)
 		menuItemsRelay.accept(currentMenuItems)
@@ -150,7 +195,9 @@ final class AddBillV2ViewModel {
 	
 	func incrementParticipantShares(_ participantId: String, inMenuItem itemId: String) {
 		var currentMenuItems = menuItemsRelay.value
-		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else { return }
+		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else {
+			return
+		}
 		
 		let currentShares = currentMenuItems[itemIndex].participantAssignments[participantId] ?? 0
 		currentMenuItems[itemIndex].participantAssignments[participantId] = currentShares + 1
@@ -159,7 +206,9 @@ final class AddBillV2ViewModel {
 	
 	func decrementParticipantShares(_ participantId: String, inMenuItem itemId: String) {
 		var currentMenuItems = menuItemsRelay.value
-		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else { return }
+		guard let itemIndex = currentMenuItems.firstIndex(where: { $0.id == itemId }) else {
+			return
+		}
 		
 		let currentShares = currentMenuItems[itemIndex].participantAssignments[participantId] ?? 0
 		if currentShares > 1 {

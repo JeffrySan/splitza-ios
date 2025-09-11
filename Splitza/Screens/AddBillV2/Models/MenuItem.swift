@@ -8,16 +8,28 @@
 import Foundation
 
 struct MenuItem {
+	// MARK: - Properties
+	
 	let id: String
 	var title: String
 	var price: Double
 	var participantAssignments: [String: Int] // participantId: count
 	
-	init(id: String = UUID().uuidString, title: String = "", price: Double = 0.0, participantAssignments: [String: Int] = [:]) {
+	// MARK: - Initialization
+	
+	init(id: String = UUID().uuidString, 
+		 title: String = "", 
+		 price: Double = 0.0, 
+		 participantAssignments: [String: Int] = [:]) {
 		self.id = id
 		self.title = title
 		self.price = price
 		self.participantAssignments = participantAssignments
+	}
+	
+	// Helper method to check if participant is assigned
+	func isParticipantAssigned(_ participantId: String) -> Bool {
+		return (participantAssignments[participantId] ?? 0) > 0
 	}
 	
 	// Calculate total shares for this menu item
@@ -37,7 +49,23 @@ struct MenuItem {
 		return pricePerShare * Double(shares)
 	}
 	
-	// Get all assigned participant IDs
+	// MARK: - Participant Management
+	
+	mutating func toggleParticipant(_ participantId: String) {
+		guard let currentAssignment = participantAssignments[participantId] else {
+			participantAssignments[participantId] = 1
+			return
+		}
+		
+		if currentAssignment > 0 {
+			participantAssignments[participantId] = 0
+		} else {
+			participantAssignments[participantId] = 1
+		}
+	}
+	
+	// MARK: - Computed Properties
+	
 	var assignedParticipantIds: [String] {
 		return participantAssignments.keys.filter { participantAssignments[$0] ?? 0 > 0 }
 	}

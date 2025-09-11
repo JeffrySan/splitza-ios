@@ -362,14 +362,13 @@ final class AddBillV2ViewController: UIViewController {
 		
 		// Always use simple reloadData - it's the safest approach
 		tableView.reloadData()
+		tableView.invalidateIntrinsicContentSize()
 		
-		// Option 1: Force layout immediately (synchronous)
-		tableView.layoutIfNeeded()
-		
-		let cellHeight: CGFloat = 166
+		let cellHeight: CGFloat = 0
 		let minTableViewHeight = menuItems.isEmpty ? 0 : cellHeight * CGFloat(menuItems.count)
 		
 		tableView.snp.updateConstraints { make in
+			print("[Lala] ContentSize: \(tableView.contentSize.height), min: \(minTableViewHeight)")
 			make.height.equalTo(max(tableView.contentSize.height, minTableViewHeight))
 		}
 		

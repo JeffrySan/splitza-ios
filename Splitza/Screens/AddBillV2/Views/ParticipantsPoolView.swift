@@ -234,41 +234,13 @@ final class ParticipantsPoolView: UIView {
 		
 		// Add participant chips
 		for (index, participant) in participants.enumerated() {
-			let chipView = createParticipantChip(participant, index)
+			let chipView = ParticipantViewConstructor.create(
+				selectedParticipantTag: viewModel.selectedParticipantViewTag,
+				labelName: participant.abbreviatedName,
+				index: index
+			)
 			participantsStackView.addArrangedSubview(chipView)
 		}
-	}
-	
-	private func createParticipantChip(_ participant: BillParticipant, _ index: Int) -> UIView {
-		
-		let isSelectedParticipant = viewModel.selectedParticipantViewTag == index
-		let borderColor: UIColor = isSelectedParticipant ? .systemBlue : .systemBlue.withAlphaComponent(0.3)
-		
-		let containerView = UIView()
-		containerView.backgroundColor = isSelectedParticipant ? .systemBlue.withAlphaComponent(0.2) : .systemBlue.withAlphaComponent(0.1)
-		containerView.layer.cornerRadius = 16
-		containerView.layer.borderWidth = isSelectedParticipant ? 2 : 1
-		containerView.layer.borderColor = borderColor.cgColor
-		containerView.tag = index
-		
-		let label = UILabel()
-		label.text = participant.abbreviatedName
-		label.font = .systemFont(ofSize: 12, weight: .semibold)
-		label.textColor = .systemBlue
-		label.textAlignment = .center
-		
-		containerView.addSubview(label)
-		
-		// Constraints
-		containerView.snp.makeConstraints { make in
-			make.width.height.equalTo(32)
-		}
-		
-		label.snp.makeConstraints { make in
-			make.center.equalToSuperview()
-		}
-		
-		return containerView
 	}
 	
 	private func updateCollapsedState(_ isCollapsed: Bool) {
