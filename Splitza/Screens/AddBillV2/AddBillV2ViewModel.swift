@@ -36,6 +36,7 @@ final class AddBillV2ViewModel {
 	let totalAmountObservable: Observable<Double>
 	let participantTotalsObservable: Observable<[String: Double]>
 	
+	var selectedParticipantViewTag: Int = 0
 	// MARK: - Initialization
 	
 	init() {

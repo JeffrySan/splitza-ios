@@ -233,18 +233,23 @@ final class ParticipantsPoolView: UIView {
 		}
 		
 		// Add participant chips
-		for participant in participants {
-			let chipView = createParticipantChip(participant)
+		for (index, participant) in participants.enumerated() {
+			let chipView = createParticipantChip(participant, index)
 			participantsStackView.addArrangedSubview(chipView)
 		}
 	}
 	
-	private func createParticipantChip(_ participant: BillParticipant) -> UIView {
+	private func createParticipantChip(_ participant: BillParticipant, _ index: Int) -> UIView {
+		
+		let isSelectedParticipant = viewModel.selectedParticipantViewTag == index
+		let borderColor: UIColor = isSelectedParticipant ? .systemBlue : .systemBlue.withAlphaComponent(0.3)
+		
 		let containerView = UIView()
-		containerView.backgroundColor = .systemBlue.withAlphaComponent(0.1)
+		containerView.backgroundColor = isSelectedParticipant ? .systemBlue.withAlphaComponent(0.2) : .systemBlue.withAlphaComponent(0.1)
 		containerView.layer.cornerRadius = 16
-		containerView.layer.borderWidth = 1
-		containerView.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.3).cgColor
+		containerView.layer.borderWidth = isSelectedParticipant ? 2 : 1
+		containerView.layer.borderColor = borderColor.cgColor
+		containerView.tag = index
 		
 		let label = UILabel()
 		label.text = participant.abbreviatedName
@@ -293,8 +298,6 @@ final class ParticipantsPoolView: UIView {
 			self.collapsibleContentView.alpha = isCollapsed ? 0 : 1
 			self.participantsStackView.isHidden = isCollapsed
 			self.addParticipantButton.isHidden = isCollapsed
-			
-//			self.layoutIfNeeded()
 		}
 	}
 }

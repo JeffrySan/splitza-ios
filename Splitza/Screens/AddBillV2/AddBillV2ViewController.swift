@@ -370,7 +370,6 @@ final class AddBillV2ViewController: UIViewController {
 		let minTableViewHeight = menuItems.isEmpty ? 0 : cellHeight * CGFloat(menuItems.count)
 		
 		tableView.snp.updateConstraints { make in
-			print("[Lala] Content Size: \(tableView.contentSize.height), Min Height: \(minTableViewHeight)")
 			make.height.equalTo(max(tableView.contentSize.height, minTableViewHeight))
 		}
 		
