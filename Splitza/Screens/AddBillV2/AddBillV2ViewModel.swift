@@ -38,9 +38,8 @@ final class AddBillV2ViewModel {
 	let totalAmountObservable: Observable<Double>
 	let participantTotalsObservable: Observable<[String: Double]>
 	
-	// MARK: - State
+	var selectedParticipant: BehaviorRelay<BillParticipant>!
 	
-	var selectedParticipantViewTag: Int = 0
 	// MARK: - Initialization
 	
 	init() {
@@ -49,6 +48,7 @@ final class AddBillV2ViewModel {
 			name: "Me",
 			email: ""
 		)
+		selectedParticipant = .init(value: defaultParticipant)
 		participantsRelay.accept([defaultParticipant])
 		
 		// Calculate total amount from all menu items
@@ -145,42 +145,6 @@ final class AddBillV2ViewModel {
 		
 		currentMenuItems.remove(at: index)
 		menuItemsRelay.accept(currentMenuItems)
-	}
-	
-	// MARK: - Participant Assignment
-	
-	func toggleParticipantForMenuItem(at index: Int) {
-		
-		let currentParticipants = participantsRelay.value
-		
-		guard currentParticipants.count > selectedParticipantViewTag else {
-			return
-		}
-		
-		var currentMenuItems = menuItemsRelay.value
-		let selectedParticipant = currentParticipants[selectedParticipantViewTag]
-		
-		guard index < currentMenuItems.count else {
-			return
-		}
-		
-		currentMenuItems[index].toggleParticipant(selectedParticipant.id)
-		menuItemsRelay.accept(currentMenuItems)
-	}
-	
-	func isParticipantAssignedToMenuItem(at index: Int) -> Bool {
-		
-		let currentParticipants = participantsRelay.value
-		let currentMenuItemsRelay = menuItemsRelay.value
-		
-		guard currentParticipants.count > selectedParticipantViewTag,
-			  currentMenuItemsRelay.count > index else {
-			return false
-		}
-		
-		let menuItem = currentMenuItemsRelay[index]
-		
-		return menuItem.isParticipantAssigned(currentParticipants[selectedParticipantViewTag].id)
 	}
 	
 	func removeParticipantAssignment(_ participantId: String, fromMenuItem itemId: String) {

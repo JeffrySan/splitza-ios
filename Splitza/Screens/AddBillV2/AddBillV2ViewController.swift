@@ -136,6 +136,14 @@ final class AddBillV2ViewController: UIViewController {
 		setupNavigation()
 	}
 	
+	override func viewDidLayoutSubviews() {
+		super.viewDidLayoutSubviews()
+		
+		tableView.snp.updateConstraints { make in
+			make.height.equalTo(tableView.contentSize.height)
+		}
+	}
+	
 	// MARK: - Setup
 	
 	private func setupUI() {
@@ -335,8 +343,12 @@ final class AddBillV2ViewController: UIViewController {
 		// TODO: Implement save functionality
 		print("Save bill tapped")
 		
+		viewModel.menuItemsRelay.value.forEach { menuItem in
+			print("[MenuItem] \(menuItem.title) - $\(menuItem.price) assigned to: \(menuItem.assignedParticipantIds.joined(separator: ", "))")
+		}
+		
 		// For now, just dismiss
-		dismiss(animated: true)
+//		dismiss(animated: true)
 	}
 	
 	@objc private func dismissKeyboard() {
@@ -370,30 +382,10 @@ final class AddBillV2ViewController: UIViewController {
 	
 	private func updateMenuItemsUI(_ menuItems: [MenuItem]) {
 		
-		// Always use simple reloadData - it's the safest approach
 		tableView.reloadData()
-		tableView.invalidateIntrinsicContentSize()
 		
-		// TODO: Search Better Approach for Dynamic Height
-		let cellHeight: CGFloat = 73.5
-		let minTableViewHeight = menuItems.isEmpty ? 0 : cellHeight * CGFloat(menuItems.count)
-		
-		tableView.snp.updateConstraints { make in
-			print("[Lala] ContentSize: \(tableView.contentSize.height), min: \(minTableViewHeight)")
-			make.height.equalTo(max(tableView.contentSize.height, minTableViewHeight))
-		}
-		
-		// Animate the height change
-		UIView.animate(
-			withDuration: 0.3,
-			delay: 0,
-			usingSpringWithDamping: 0.8,
-			initialSpringVelocity: 0.5,
-			options: .curveEaseInOut
-		) { [weak self] in
-			self?.tableView.setNeedsLayout()
-			self?.tableView.layoutIfNeeded()
-		}
+		tableView.setNeedsLayout()
+		tableView.layoutIfNeeded()
 	}
 	
 	private func updateTotalAmount(_ amount: Double) {
@@ -533,30 +525,44 @@ extension AddBillV2ViewController: UITableViewDataSource {
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCell(withIdentifier: MenuItemCell.identifier, for: indexPath) as! MenuItemCell
 		
-		let menuItem = viewModel.menuItemsRelay.value[indexPath.row]
+		var menuItem = viewModel.menuItemsRelay.value[indexPath.row]
 		let participants = viewModel.participantsRelay.value
 		let currency = viewModel.currencyRelay.value
+		cell.configure(with: menuItem, participants: participants, currency: currency, viewModel: viewModel)
 		
-		cell.configure(with: menuItem, participants: participants, currency: currency)
-		
-		// Configure closures
 		cell.onTitleChanged = { [weak self] title in
-			guard let self = self else { return }
-			var updatedMenuItem = self.viewModel.menuItemsRelay.value[indexPath.row]
-			updatedMenuItem.title = title
-			self.viewModel.updateMenuItem(at: indexPath.row, with: updatedMenuItem)
+			guard let self = self else {
+				return
+			}
+			menuItem.title = title
+			self.viewModel.updateMenuItem(at: indexPath.row, with: menuItem)
 		}
 		
 		cell.onPriceChanged = { [weak self] price in
-			guard let self = self else { return }
-			var updatedMenuItem = self.viewModel.menuItemsRelay.value[indexPath.row]
-			updatedMenuItem.price = price
-			self.viewModel.updateMenuItem(at: indexPath.row, with: updatedMenuItem)
+			guard let self = self else {
+				return
+			}
+			
+			menuItem.price = price
+			self.viewModel.updateMenuItem(at: indexPath.row, with: menuItem)
+		}
+		
+		cell.onMenuSelected = { [weak self] isSelected in
+			guard let self else {
+				return
+			}
+			
+			let selectedParticipant = self.viewModel.selectedParticipant.value
+			menuItem.participantAssignments[selectedParticipant.id] = isSelected ? 1 : nil
+			
+			self.viewModel.updateMenuItem(at: indexPath.row, with: menuItem)
 		}
 		
 		cell.onParticipantSelectionRequested = { [weak self] in
-			guard let self = self else { return }
-			let menuItem = self.viewModel.menuItemsRelay.value[indexPath.row]
+			guard let self = self else {
+				return
+			}
+			
 			self.presentParticipantSelector(for: menuItem, at: indexPath)
 		}
 		

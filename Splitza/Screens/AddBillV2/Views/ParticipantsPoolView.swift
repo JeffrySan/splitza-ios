@@ -25,6 +25,8 @@ final class ParticipantsPoolView: UIView {
 	private let addParticipantButton: UIButton = UIButton(type: .system)
 	
 	// MARK: - Properties
+	let selectedParticipant: BehaviorRelay<BillParticipant?> = .init(value: nil)
+	
 	private let disposeBag = DisposeBag()
 	private let viewModel: AddBillV2ViewModel
 	
@@ -232,12 +234,8 @@ final class ParticipantsPoolView: UIView {
 		}
 		
 		// Add participant chips
-		for (index, participant) in participants.enumerated() {
-			let chipView = ParticipantViewConstructor.create(
-				selectedParticipantTag: viewModel.selectedParticipantViewTag,
-				labelName: participant.abbreviatedName,
-				index: index
-			)
+		for participant in participants {
+			let chipView = ParticipantViewCoin(billParticipant: participant, viewModel: viewModel)
 			participantsStackView.addArrangedSubview(chipView)
 		}
 	}

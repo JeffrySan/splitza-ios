@@ -58,7 +58,6 @@ final class HistoryViewController: UIViewController {
 		setupUI()
 		
 //		viewModel.loadData()
-		animateTableViewEntrance()
 		warmUpKeyboard()
 	}
 	
@@ -180,25 +179,6 @@ final class HistoryViewController: UIViewController {
 				self?.updateUI()
 			})
 			.disposed(by: viewModel.disposeBag)
-	}
-	
-	private func animateTableViewEntrance() {
-		let cells = tableView.visibleCells
-		let tableViewHeight = tableView.bounds.height
-		
-		for (index, cell) in cells.enumerated() {
-			cell.transform = CGAffineTransform(translationX: 0, y: tableViewHeight)
-			
-			UIView.animate(
-				withDuration: 0.8,
-				delay: Double(index) * 0.1,
-				usingSpringWithDamping: 0.8,
-				initialSpringVelocity: 0.5,
-				options: [.curveEaseInOut]
-			) {
-				cell.transform = .identity
-			}
-		}
 	}
 	
 	// MARK: - Setup UI Components

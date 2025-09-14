@@ -14,6 +14,7 @@ final class MenuItemCell: UITableViewCell {
 	
 	static let identifier = "MenuItemCell"
 	
+	var onMenuSelected: ((Bool) -> Void)?
 	var onTitleChanged: ((String) -> Void)?
 	var onPriceChanged: ((Double) -> Void)?
 	var onParticipantSelectionRequested: (() -> Void)?
@@ -31,6 +32,7 @@ final class MenuItemCell: UITableViewCell {
 	private var menuItem: MenuItem!
 	private var participants: [BillParticipant] = []
 	private var currency: String = "USD"
+	private var viewModel: AddBillV2ViewModel!
 	
 	private var assignedParticipants: [BillParticipant] {
 		return participants.filter { participant in
@@ -149,7 +151,6 @@ final class MenuItemCell: UITableViewCell {
 		
 		participantsStackView.snp.makeConstraints { make in
 			make.edges.equalToSuperview()
-			make.height.equalTo(0)
 		}
 	}
 	
@@ -161,6 +162,21 @@ final class MenuItemCell: UITableViewCell {
 		participantsScrollView.addGestureRecognizer(tapGesture)
 		
 		checkboxButton.addTarget(self, action: #selector(checkboxTapped), for: .touchUpInside)
+	}
+	
+	private func observeSelectedParticipant() {
+		viewModel.selectedParticipant
+			.distinctUntilChanged { old, new in
+				old.id == new.id
+			}
+			.subscribe(onNext: { [weak self] participant in
+				guard let self else {
+					return
+				}
+				
+				self.checkboxButton.isSelected = self.menuItem.participantAssignments[participant.id] != nil
+			})
+			.disposed(by: disposeBag)
 	}
 	
 	override func prepareForReuse() {
@@ -177,16 +193,18 @@ final class MenuItemCell: UITableViewCell {
 	}
 	// MARK: - Configuration
 	
-	func configure(with menuItem: MenuItem, participants: [BillParticipant], currency: String) {
+	func configure(with menuItem: MenuItem, participants: [BillParticipant], currency: String, viewModel: AddBillV2ViewModel) {
 		self.menuItem = menuItem
 		self.participants = participants
 		self.currency = currency
+		self.viewModel = viewModel
 		
 		titleTextField.text = menuItem.title
 		priceTextField.text = menuItem.price.formattedCurrency(currencyCode: currency)
 		checkboxButton.isSelected = !menuItem.assignedParticipantIds.isEmpty
 		
 		updateParticipantsUI()
+		observeSelectedParticipant()
 	}
 	
 	// MARK: - Actions
@@ -213,13 +231,12 @@ final class MenuItemCell: UITableViewCell {
 		onParticipantSelectionRequested?()
 	}
 	
-	@objc private func addParticipantViewTapped() {
-		onParticipantSelectionRequested?()
-	}
-	
 	@objc private func checkboxTapped() {
 		checkboxButton.isSelected.toggle()
-		// You can add logic here to update participant assignment if needed
+		
+		onMenuSelected?(checkboxButton.isSelected)
+		
+		updateParticipantsUI()
 	}
 	// MARK: - Private Methods
 	
@@ -231,15 +248,11 @@ final class MenuItemCell: UITableViewCell {
 		
 		for participant in localAssignedParticipants {
 			// let shares = (menuItem.participantAssignments[participant.id] ?? 1)
-			let participantView = ParticipantViewConstructor.create(
-				selectedParticipantTag: -1,
-				labelName: participant.abbreviatedName,
-				index: -1
-			)
-			participantsStackView.addArrangedSubview(participantView)
+			let chipView = ParticipantViewCoin(billParticipant: participant, viewModel: viewModel, disableTap: true)
+			participantsStackView.addArrangedSubview(chipView)
 		}
 		
-		participantsStackView.snp.updateConstraints { make in
+		participantsScrollView.snp.updateConstraints { make in
 			make.height.equalTo(localAssignedParticipants.isEmpty ? 0 : 44)
 		}
 	}

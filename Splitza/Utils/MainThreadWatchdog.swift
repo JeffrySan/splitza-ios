@@ -27,24 +27,25 @@ final class Watchdog: Thread {
 		
 		while !isCancelled {
 			
-			lastPing = Date()
-			
-			DispatchQueue.global(qos: .userInteractive).async {  [weak self] in
+			DispatchQueue.main.async {  [weak self] in
 				
 				guard let self else {
 					return
 				}
 				
-				let delta = Date().timeIntervalSince(self.lastPing)
-				
-				if delta > self.threshold {
-					let rounded = String(format: "%.2f", delta)
-					print("⚠️ Main thread blocked ~\(rounded)s (threshold: \(self.threshold)s)")
-				}
-				
-				lastPing = Date()
 				self.semaphore.signal()
+				self.lastPing = Date()
 			}
+			
+			let delta = Date().timeIntervalSince(self.lastPing)
+			
+			// print("[Lala] Watchdog: \(delta)s since last ping")
+			if delta > self.threshold {
+				let rounded = String(format: "%.2f", delta)
+				print("⚠️ Main thread blocked ~\(rounded)s (threshold: \(self.threshold)s)")
+			}
+			
+			Thread.sleep(forTimeInterval: 0.1)
 			
 			_ = semaphore.wait(timeout: .distantFuture)
 		}

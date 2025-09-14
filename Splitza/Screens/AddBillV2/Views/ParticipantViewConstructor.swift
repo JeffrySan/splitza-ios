@@ -6,37 +6,100 @@
 //
 
 import UIKit
+import RxSwift
+import RxRelay
 
-struct ParticipantViewConstructor {
+final class ParticipantViewCoin: UIView {
 	
-	static func create(selectedParticipantTag: Int, labelName: String, index: Int) -> UIView {
-		let isSelectedParticipant = selectedParticipantTag == index
+	private let label = UILabel()
+	
+	private let disposeBag: DisposeBag = DisposeBag()
+	private let billParticipant: BillParticipant
+	private let viewModel: AddBillV2ViewModel
+	private let disableTap: Bool
+	
+	init(billParticipant: BillParticipant, viewModel: AddBillV2ViewModel, disableTap: Bool = false) {
+		self.billParticipant = billParticipant
+		self.viewModel = viewModel
+		self.disableTap = disableTap
+		
+		super.init(frame: .zero)
+		
+		configureContainerView()
+		configureLabelView()
+		
+		setupConstraints()
+		
+		observeSelectedParticipant()
+	}
+	
+	override func didMoveToSuperview() {
+		super.didMoveToSuperview()
+		
+		setupActions()
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	private func configureContainerView(isSelectedParticipant: Bool = false) {
+		
 		let borderColor: UIColor = isSelectedParticipant ? .systemBlue : .systemBlue.withAlphaComponent(0.3)
 		
-		let containerView = UIView()
-		containerView.backgroundColor = isSelectedParticipant ? .systemBlue.withAlphaComponent(0.2) : .systemBlue.withAlphaComponent(0.1)
-		containerView.layer.cornerRadius = 16
-		containerView.layer.borderWidth = isSelectedParticipant ? 2 : 1
-		containerView.layer.borderColor = borderColor.cgColor
-		containerView.tag = index
-		
-		let label = UILabel()
-		label.text = labelName
+		backgroundColor = isSelectedParticipant ? .systemBlue.withAlphaComponent(0.2) : .systemBlue.withAlphaComponent(0.1)
+		layer.cornerRadius = 16
+		layer.borderWidth = isSelectedParticipant ? 2 : 1
+		layer.borderColor = borderColor.cgColor
+	}
+	
+	private func configureLabelView() {
+		label.text = billParticipant.abbreviatedName
 		label.font = .systemFont(ofSize: 12, weight: .semibold)
 		label.textColor = .systemBlue
 		label.textAlignment = .center
 		
-		containerView.addSubview(label)
-		
-		// Constraints
-		containerView.snp.makeConstraints { make in
+		addSubview(label)
+	}
+	
+	private func setupConstraints() {
+		snp.makeConstraints { make in
 			make.width.height.equalTo(32)
 		}
 		
 		label.snp.makeConstraints { make in
 			make.center.equalToSuperview()
 		}
+	}
+	
+	private func observeSelectedParticipant() {
+		viewModel.selectedParticipant
+			.distinctUntilChanged({ old, new in
+				return old.id == new.id
+			})
+			.subscribe(onNext: { [weak self] participant in
+				
+				guard let self else {
+					return
+				}
+				
+				let isSelectedParticipant = participant.id == self.billParticipant.id
+				self.configureContainerView(isSelectedParticipant: isSelectedParticipant)
+			})
+			.disposed(by: disposeBag)
+	}
+	
+	private func setupActions() {
+		let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+		addGestureRecognizer(tapGesture)
+	}
+	
+	@objc private func handleTap() {
 		
-		return containerView
+		guard !disableTap else {
+			return
+		}
+		
+		viewModel.selectedParticipant.accept(billParticipant)
 	}
 }
