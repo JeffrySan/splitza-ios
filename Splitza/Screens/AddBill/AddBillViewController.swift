@@ -1,5 +1,5 @@
 //
-//  AddBillV2ViewController.swift
+//  AddBillViewController.swift
 //  Splitza
 //
 //  Created by Jeffry Sandy Purnomo on 31/08/25.
@@ -10,10 +10,10 @@ import SnapKit
 import RxSwift
 import RxRelay
 
-final class AddBillV2ViewController: UIViewController {
+final class AddBillViewController: UIViewController {
 	
 	// MARK: - Properties
-	private let viewModel = AddBillV2ViewModel()
+	private let viewModel = AddBillViewModel()
 	private let disposeBag = DisposeBag()
 	
 	// MARK: - UI Components
@@ -517,7 +517,7 @@ final class AddBillV2ViewController: UIViewController {
 
 // MARK: - UITableViewDataSource
 
-extension AddBillV2ViewController: UITableViewDataSource {
+extension AddBillViewController: UITableViewDataSource {
 	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 		return viewModel.menuItemsRelay.value.count
 	}
@@ -572,7 +572,7 @@ extension AddBillV2ViewController: UITableViewDataSource {
 
 // MARK: - UITableViewDelegate
 
-extension AddBillV2ViewController: UITableViewDelegate {
+extension AddBillViewController: UITableViewDelegate {
 	
 	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
 		return UITableView.automaticDimension

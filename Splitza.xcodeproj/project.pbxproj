@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7CB3B6192E76BC8700E4C6AD /* AddBillHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CB3B6182E76BC8700E4C6AD /* AddBillHeaderView.swift */; };
 		7CF05BA72E62B5F9007857A1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 7CF05BA62E62B5F9007857A1 /* Supabase */; };
 		7CF05BB92E62E207007857A1 /* RxRelay.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C749E352E48716B00E0EB32 /* RxRelay.xcframework */; };
 		7CF05BBE2E62E244007857A1 /* RxSwift.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */; };
@@ -19,6 +20,7 @@
 		7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxSwift.xcframework; path = Carthage/Build/RxSwift.xcframework; sourceTree = "<group>"; };
 		7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxCocoa.xcframework; path = Carthage/Build/RxCocoa.xcframework; sourceTree = "<group>"; };
 		7C749E352E48716B00E0EB32 /* RxRelay.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxRelay.xcframework; path = Carthage/Build/RxRelay.xcframework; sourceTree = "<group>"; };
+		7CB3B6182E76BC8700E4C6AD /* AddBillHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AddBillHeaderView.swift; path = Splitza/Screens/AddBill/Views/AddBillHeaderView.swift; sourceTree = "<group>"; };
 		7CF05BD72E634D76007857A1 /* SnapKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = SnapKit.xcframework; path = Carthage/Build/SnapKit.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -27,6 +29,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Screens/AddBill/Views/AddBillHeaderView.swift,
 			);
 			target = 7C05CA352E1E15E100F2D1E2 /* Splitza */;
 		};
@@ -62,6 +65,7 @@
 		7C05CA2D2E1E15E100F2D1E2 = {
 			isa = PBXGroup;
 			children = (
+				7CB3B6182E76BC8700E4C6AD /* AddBillHeaderView.swift */,
 				7C05CA382E1E15E100F2D1E2 /* Splitza */,
 				7C05CA702E1E1A5100F2D1E2 /* Frameworks */,
 				7C05CA372E1E15E100F2D1E2 /* Products */,
@@ -165,6 +169,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7CB3B6192E76BC8700E4C6AD /* AddBillHeaderView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

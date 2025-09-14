@@ -1,5 +1,5 @@
 //
-//  AddBillV2ViewModel.swift
+//  AddBillViewModel.swift
 //  Splitza
 //
 //  Created by Jeffry Sandy Purnomo on 31/08/25.
@@ -9,7 +9,7 @@ import Foundation
 import RxSwift
 import RxRelay
 
-final class AddBillV2ViewModel {
+final class AddBillViewModel {
 	
 	// MARK: - Properties
 	

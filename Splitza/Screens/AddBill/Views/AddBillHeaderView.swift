@@ -14,10 +14,10 @@ final class AddBillHeaderView: UIView {
 	let titleTextField: UITextField = UITextField()
 	let locationTextField: UITextField = UITextField()
 	
-	private let viewModel: AddBillV2ViewModel
+	private let viewModel: AddBillViewModel
 	private let disposeBag = DisposeBag()
 	
-	init(viewModel: AddBillV2ViewModel) {
+	init(viewModel: AddBillViewModel) {
 		
 		self.viewModel = viewModel
 		

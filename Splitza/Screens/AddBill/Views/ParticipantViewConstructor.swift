@@ -15,10 +15,10 @@ final class ParticipantViewCoin: UIView {
 	
 	private let disposeBag: DisposeBag = DisposeBag()
 	private let billParticipant: BillParticipant
-	private let viewModel: AddBillV2ViewModel
+	private let viewModel: AddBillViewModel
 	private let disableTap: Bool
 	
-	init(billParticipant: BillParticipant, viewModel: AddBillV2ViewModel, disableTap: Bool = false) {
+	init(billParticipant: BillParticipant, viewModel: AddBillViewModel, disableTap: Bool = false) {
 		self.billParticipant = billParticipant
 		self.viewModel = viewModel
 		self.disableTap = disableTap

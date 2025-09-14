@@ -28,9 +28,9 @@ final class ParticipantsPoolView: UIView {
 	let selectedParticipant: BehaviorRelay<BillParticipant?> = .init(value: nil)
 	
 	private let disposeBag = DisposeBag()
-	private let viewModel: AddBillV2ViewModel
+	private let viewModel: AddBillViewModel
 	
-	init(viewModel: AddBillV2ViewModel) {
+	init(viewModel: AddBillViewModel) {
 		self.viewModel = viewModel
 		super.init(frame: .zero)
 		
@@ -58,7 +58,7 @@ final class ParticipantsPoolView: UIView {
 	
 	required init?(coder: NSCoder) {
 		
-		self.viewModel = AddBillV2ViewModel()
+		self.viewModel = AddBillViewModel()
 		super.init(coder: coder)
 		
 		fatalError("init(coder:) has not been implemented")

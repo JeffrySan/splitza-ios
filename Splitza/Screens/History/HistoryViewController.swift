@@ -121,12 +121,12 @@ final class HistoryViewController: UIViewController {
 	}
 	
 	@objc private func addButtonTapped() {
-		presentAddBillV2ViewController()
+		presentAddBillViewController()
 	}
 	
-	private func presentAddBillV2ViewController() {
+	private func presentAddBillViewController() {
 		
-		let addBillViewController = AddBillV2ViewController()
+		let addBillViewController = AddBillViewController()
 		let addBillNavigationController = UINavigationController(rootViewController: addBillViewController)
 		addBillNavigationController.modalTransitionStyle = .coverVertical
 		addBillNavigationController.modalPresentationStyle = .fullScreen

@@ -32,7 +32,7 @@ final class MenuItemCell: UITableViewCell {
 	private var menuItem: MenuItem!
 	private var participants: [BillParticipant] = []
 	private var currency: String = "USD"
-	private var viewModel: AddBillV2ViewModel!
+	private var viewModel: AddBillViewModel!
 	
 	private var assignedParticipants: [BillParticipant] {
 		return participants.filter { participant in
@@ -193,7 +193,7 @@ final class MenuItemCell: UITableViewCell {
 	}
 	// MARK: - Configuration
 	
-	func configure(with menuItem: MenuItem, participants: [BillParticipant], currency: String, viewModel: AddBillV2ViewModel) {
+	func configure(with menuItem: MenuItem, participants: [BillParticipant], currency: String, viewModel: AddBillViewModel) {
 		self.menuItem = menuItem
 		self.participants = participants
 		self.currency = currency
