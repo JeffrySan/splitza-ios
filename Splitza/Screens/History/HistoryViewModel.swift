@@ -75,8 +75,9 @@ final class HistoryViewModel {
 		// Use configuration to determine data source type
 		let dataSourceType = NetworkConfiguration.shared.dataSourceType
 		self.repository = repository ?? SplitBillRepository(dataSourceType: dataSourceType)
+		
 		setupBindings()
-	}	// MARK: - Setup
+	}
 	
 	private func setupBindings() {
 		// Observe search query changes and perform debounced search

@@ -21,79 +21,6 @@ enum SplitBillService {
 	case markParticipantPaid(billId: String, participantId: String, paid: Bool)
 }
 
-extension SplitBillService: NetworkRequest {
-	
-	var parameters: [String : Any]? {
-		return nil
-	}
-	
-	var baseURL: String {
-		return NetworkConfiguration.shared.baseURL
-	}
-	
-	var path: String {
-		let basePath = NetworkConfiguration.Endpoints.splitBills
-		
-		switch self {
-		case .getAllSplitBills:
-			return basePath
-		case .getSplitBill(let id):
-			return "\(basePath)/\(id)"
-		case .searchSplitBills:
-			return "\(basePath)/search"
-		case .createSplitBill:
-			return basePath
-		case .updateSplitBill(let id, _):
-			return "\(basePath)/\(id)"
-		case .deleteSplitBill(let id):
-			return "\(basePath)/\(id)"
-		case .settleSplitBill(let id):
-			return "\(basePath)/\(id)/settle"
-		case .markParticipantPaid(let billId, let participantId, _):
-			return "\(basePath)/\(billId)/participants/\(participantId)/payment"
-		}
-	}
-	
-	var method: HTTPMethod {
-		switch self {
-		case .getAllSplitBills, .getSplitBill, .searchSplitBills:
-			return .GET
-		case .createSplitBill:
-			return .POST
-		case .updateSplitBill, .settleSplitBill, .markParticipantPaid:
-			return .PUT
-		case .deleteSplitBill:
-			return .DELETE
-		}
-	}
-	
-	var body: Data? {
-		switch self {
-		case .createSplitBill(let request):
-			return try? JSONEncoder().encode(request)
-		case .updateSplitBill(_, let request):
-			return try? JSONEncoder().encode(request)
-		default:
-			return nil
-		}
-	}
-	
-	var headers: [String: String]? {
-		var headers = NetworkConfiguration.shared.defaultHeaders
-		
-		// Add authentication header if available
-		if let authToken = AuthManager.shared.authToken {
-			headers["Authorization"] = "Bearer \(authToken)"
-		}
-		
-		return headers
-	}
-	
-	var timeoutInterval: TimeInterval {
-		return NetworkConfiguration.shared.requestTimeout
-	}
-}
-
 // MARK: - Split Bill API Service
 
 protocol SplitBillAPIServiceable {
@@ -292,5 +219,78 @@ extension SplitBill {
 			description: description,
 			isSettled: isSettled
 		)
+	}
+}
+
+extension SplitBillService: NetworkRequest {
+	
+	var parameters: [String : Any]? {
+		return nil
+	}
+	
+	var baseURL: String {
+		return NetworkConfiguration.shared.baseURL
+	}
+	
+	var path: String {
+		let basePath = NetworkConfiguration.Endpoints.splitBills
+		
+		switch self {
+		case .getAllSplitBills:
+			return basePath
+		case .getSplitBill(let id):
+			return "\(basePath)/\(id)"
+		case .searchSplitBills:
+			return "\(basePath)/search"
+		case .createSplitBill:
+			return basePath
+		case .updateSplitBill(let id, _):
+			return "\(basePath)/\(id)"
+		case .deleteSplitBill(let id):
+			return "\(basePath)/\(id)"
+		case .settleSplitBill(let id):
+			return "\(basePath)/\(id)/settle"
+		case .markParticipantPaid(let billId, let participantId, _):
+			return "\(basePath)/\(billId)/participants/\(participantId)/payment"
+		}
+	}
+	
+	var method: HTTPMethod {
+		switch self {
+		case .getAllSplitBills, .getSplitBill, .searchSplitBills:
+			return .GET
+		case .createSplitBill:
+			return .POST
+		case .updateSplitBill, .settleSplitBill, .markParticipantPaid:
+			return .PUT
+		case .deleteSplitBill:
+			return .DELETE
+		}
+	}
+	
+	var body: Data? {
+		switch self {
+		case .createSplitBill(let request):
+			return try? JSONEncoder().encode(request)
+		case .updateSplitBill(_, let request):
+			return try? JSONEncoder().encode(request)
+		default:
+			return nil
+		}
+	}
+	
+	var headers: [String: String]? {
+		var headers = NetworkConfiguration.shared.defaultHeaders
+		
+		// Add authentication header if available
+		if let authToken = AuthManager.shared.authToken {
+			headers["Authorization"] = "Bearer \(authToken)"
+		}
+		
+		return headers
+	}
+	
+	var timeoutInterval: TimeInterval {
+		return NetworkConfiguration.shared.requestTimeout
 	}
 }
