@@ -53,7 +53,7 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "ENVIRONMENT"
-            value = "development"
+            value = "local"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
