@@ -1,18 +1,5 @@
 import UIKit
 import SnapKit
-import Supabase
-
-final class SupabaseManager {
-	static let shared = SupabaseManager()
-	let client: SupabaseClient
-
-	private init() {
-		// Replace these with your Supabase project URL and anon key
-		let urlString = "YOUR_SUPABASE_URL"
-		let key = "YOUR_SUPABASE_ANON_KEY"
-		client = SupabaseClient(supabaseURL: URL(string: urlString)!, supabaseKey: key)
-	}
-}
 
 final class LoginViewController: UIViewController {
 	// UI Components
