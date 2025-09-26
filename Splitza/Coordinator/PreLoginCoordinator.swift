@@ -9,11 +9,15 @@ import UIKit
 
 final class PreLoginCoordinator: Coordinator {
 	
-	private(set) var loginViewController: LoginViewController?
+	var onNavigationEvent: ((NavigationEvent) -> Void)?
 	
-	var rootViewController: UIViewController {
-		return UINavigationController()
+	enum NavigationEvent {
+		case showHomePageScreen
 	}
+	
+	private var loginViewController: LoginViewController?
+	
+	var rootViewController: UIViewController = UINavigationController()
 	
 	init() { }
 	
@@ -23,7 +27,12 @@ final class PreLoginCoordinator: Coordinator {
 	
 	private func showAuthenticationPage() {
 		
-		let localLoginViewController = LoginViewController()
+		let viewModel = LoginViewModel()
+		viewModel.onNavigationEvent = { [weak self] event in
+			self?.onNavigationEvent?(event)
+		}
+		
+		let localLoginViewController = LoginViewController(viewModel: viewModel)
 		Router.shared.push(localLoginViewController, on: self)
 	}
 }

@@ -15,14 +15,10 @@ enum Environment: String {
 	case production
 	
 	static var current: Environment {
-		#if DEBUG
-		return getDebugEnvironment()
-		#else
-		return getReleaseEnvironment()
-		#endif
+		return getEnvironment()
 	}
 	
-	private static func getDebugEnvironment() -> Environment {
+	private static func getEnvironment() -> Environment {
 		// First check for scheme environment variable
 		if let envString = ProcessInfo.processInfo.environment["ENVIRONMENT"],
 		   let environment = Environment(rawValue: envString) {

@@ -9,6 +9,12 @@ import UIKit
 
 final class TabbarCoordinator: Coordinator {
 	
+	var onNavigationEvent: ((NavigationEvent) -> Void)?
+	
+	enum NavigationEvent {
+		case showPreLoginPage
+	}
+	
 	private(set) var historyViewController: UIViewController = UIViewController()
 	private(set) var scanViewController: UIViewController = UIViewController()
 	private(set) var profileViewController: UIViewController = UIViewController()
@@ -37,14 +43,21 @@ final class TabbarCoordinator: Coordinator {
 	}
 	
 	private func setupProfileViewController() {
+		let profileViewModel = ProfileViewModel()
+		profileViewModel.onNavigationEvent = { [weak self] event in
+			switch event {
+			case .logout:
+				self?.onNavigationEvent?(.showPreLoginPage)
+			}
+		}
 		
-		let localProfileViewController = ProfileViewController()
+		let localProfileViewController = ProfileViewController(viewModel: profileViewModel)
 		profileViewController = UINavigationController(rootViewController: localProfileViewController)
 		
 		profileViewController.tabBarItem = UITabBarItem(
-			title: "Home",
-			image: UIImage(systemName: "house"),
-			selectedImage: UIImage(systemName: "house.fill")
+			title: "Profile",
+			image: UIImage(systemName: "person"),
+			selectedImage: UIImage(systemName: "person.fill")
 		)
 	}
 	
