@@ -60,7 +60,7 @@ struct AppConfiguration {
 		case .staging:
 			return "https://staging-api.splitza.com"
 		case .production:
-			return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuZWx6aWVudmNqc25jb3hqZ29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzA3NTExNiwiZXhwIjoyMDY4NjUxMTE2fQ.murmB5lKurlrZ5nj-JXoKOkIIQ4XtIAIAcA26zioFUk"
+			return (Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String) ?? "-"
 		}
 	}
 }
