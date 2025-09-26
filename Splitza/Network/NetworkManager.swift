@@ -140,7 +140,7 @@ final class NetworkManager {
 		case 408:
 			throw NetworkError.timeout
 		case 500...599:
-			throw NetworkError.serverError(httpResponse.statusCode)
+			throw NetworkError.serverError(statusCode: httpResponse.statusCode)
 		default:
 			throw NetworkError.unknown(NSError(domain: "HTTP Error", code: httpResponse.statusCode))
 		}

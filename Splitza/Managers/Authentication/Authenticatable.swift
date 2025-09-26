@@ -7,27 +7,21 @@
 
 import RxSwift
 import Foundation
+import Supabase
 
-enum AuthProvider {
-	case manual
+enum AuthProvider: String {
+	case manual = "manual"
 }
 
-enum AuthError: Error {
-	case invalidCredentials
-	case networkError
-	case providerError(String)
-	case cancelled
-}
-
-struct User {
+struct User: Codable {
 	let id: String
 	let email: String?
 	let createdAt: Date
 	let lastSignInAt: Date?
-	let userMetadata: [String: Any]?
+	let userMetadata: [String: AnyJSON]?
 }
 
-struct Session {
+struct Session: Codable {
 	let accessToken: String
 	let refreshToken: String
 	let expiresAt: TimeInterval
@@ -40,12 +34,12 @@ protocol Authenticatable {
 	func login(
 		email: String,
 		password: String
-	) async -> Observable<Result<User, AuthError>>
+	) async -> Result<User, AuthError>
 	
 	func signUp(
 		email: String,
 		password: String
-	) async -> Observable<Result<User, AuthError>>
+	) async -> Result<User, AuthError>
 	
-	func logout() async -> RxSwift.Observable<Result<Void, AuthError>>
+	func logout() async -> Result<Void, AuthError>
 }

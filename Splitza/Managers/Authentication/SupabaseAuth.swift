@@ -6,6 +6,7 @@
 //
 
 import RxSwift
+import Supabase
 
 final class SupabaseAuth: Authenticatable {
 	
@@ -13,11 +14,11 @@ final class SupabaseAuth: Authenticatable {
 	
 	private let supabaseManager = SupabaseManager.shared
 	
-	private init() {
+	init() {
 		
 	}
 	
-	func login(email: String, password: String) async -> RxSwift.Observable<Result<User, AuthError>> {
+	func login(email: String, password: String) async -> Result<User, AuthError> {
 		
 		do {
 			let session = try await supabaseManager.client.auth.signIn(email: email, password: password)
@@ -35,21 +36,26 @@ final class SupabaseAuth: Authenticatable {
 			)
 			
 			AuthenticationManager.shared.setSession(session: mappedSession)
-			return Observable.just(.success(mappedUser))
+			return .success(mappedUser)
+			
 		} catch {
 			
-			print("Error login: \(error), \(error.localizedDescription)")
-			return Observable.just(.failure(.networkError))
+			guard let supabaseError = error as? Auth.AuthError else {
+				return .failure(.unknown("\(error.localizedDescription)"))
+			}
+			
+			let authError = AuthError.from(errorCode: supabaseError.errorCode.rawValue)
+			return .failure(authError)
 		}
 	}
 	
-	func signUp(email: String, password: String) async -> RxSwift.Observable<Result<User, AuthError>> {
+	func signUp(email: String, password: String) async -> Result<User, AuthError> {
+		
 		do {
-			
 			let authResponse = try await supabaseManager.client.auth.signUp(email: email, password: password)
 			
 			guard let session = authResponse.session else {
-				return Observable.just(.failure(.invalidCredentials))
+				return .failure(.invalidCredentials)
 			}
 			
 			let mappedUser = User(
@@ -67,21 +73,33 @@ final class SupabaseAuth: Authenticatable {
 			)
 			
 			AuthenticationManager.shared.setSession(session: mappedSession)
-			return Observable.just(.success(mappedUser))
+			return .success(mappedUser)
 			
 		} catch {
-			return Observable.just(.failure(.networkError))
+			
+			guard let supabaseError = error as? Auth.AuthError else {
+				return .failure(.unknown("\(error.localizedDescription)"))
+			}
+			
+			let authError = AuthError.from(errorCode: supabaseError.errorCode.rawValue)
+			return .failure(authError)
 		}
 	}
 	
-	func logout() async -> RxSwift.Observable<Result<Void, AuthError>> {
+	func logout() async -> Result<Void, AuthError> {
 		
 		do {
 			try await supabaseManager.client.auth.signOut()
-			return Observable.just(.success(Void()))
+			return .success(())
 			
 		} catch {
-			return Observable.just(.failure(.networkError))
+			
+			guard let supabaseError = error as? Auth.AuthError else {
+				return .failure(.unknown("\(error.localizedDescription)"))
+			}
+			
+			let authError = AuthError.from(errorCode: supabaseError.errorCode.rawValue)
+			return .failure(authError)
 		}
 	}
 }
