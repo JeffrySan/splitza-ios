@@ -29,6 +29,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		appcoordinator = appCoordinator
 		
 		appCoordinator.start()
+		warmUpKeyboard()
+	}
+	
+	private func warmUpKeyboard() {
+		let tempTextField = UITextField(frame: .zero)
+		tempTextField.isHidden = true
+		UIApplication.shared.windows.first?.addSubview(tempTextField)
+		tempTextField.becomeFirstResponder()
+		tempTextField.resignFirstResponder()
+		tempTextField.removeFromSuperview()
 	}
 	
 	func sceneDidDisconnect(_ scene: UIScene) {
