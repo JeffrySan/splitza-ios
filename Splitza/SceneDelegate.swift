@@ -9,20 +9,26 @@ import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	
-	var window: UIWindow? = Router.shared.window
+	var window: UIWindow?
 	
 	var navigationController: UINavigationController = UINavigationController()
+	var appcoordinator: AppCoordinator?
 	
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
 		
-		guard let windowScene = (scene as? UIWindowScene) else {
-			return
-		}
+		guard let windowScene = (scene as? UIWindowScene) else { return }
 		
-		let tabbarCoordinator = TabbarCoordinator()
-		tabbarCoordinator.start()
+		// Initialize the window with the scene
+		let window = CustomWindow(windowScene: windowScene)
+		window.windowLevel = .alert + 1
 		
-		Router.shared.setRoot(tabbarCoordinator.rootViewController)
+		self.window = window
+		Router.shared.window = window
+		
+		let appCoordinator = AppCoordinator()
+		appcoordinator = appCoordinator
+		
+		appCoordinator.start()
 	}
 	
 	func sceneDidDisconnect(_ scene: UIScene) {
