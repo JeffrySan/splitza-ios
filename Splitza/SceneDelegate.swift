@@ -9,7 +9,8 @@ import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	
-	var window: UIWindow?
+	var window: UIWindow? = Router.shared.window
+	
 	var navigationController: UINavigationController = UINavigationController()
 	
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -18,22 +19,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 			return
 		}
 		
-		window = UIWindow(windowScene: windowScene)
-		
-		guard let unwrappedWindow = window else {
-			return
-		}
-		
-		// Set up the Router with the window
-		Router.shared.window = unwrappedWindow
-		
 		let tabbarCoordinator = TabbarCoordinator()
 		tabbarCoordinator.start()
 		
 		navigationController.viewControllers = [tabbarCoordinator.rootViewController]
 		
-		window?.rootViewController = navigationController
-		window?.makeKeyAndVisible()
+		Router.shared.setRoot(tabbarCoordinator)
 	}
 	
 	func sceneDidDisconnect(_ scene: UIScene) {
