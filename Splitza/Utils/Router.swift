@@ -11,7 +11,9 @@ import Foundation
 final class CustomWindow: UIWindow {
 	
 	override func sendEvent(_ event: UIEvent) {
-		super.sendEvent(event)
+		// custom logging
+		print("Event: \(event)")
+		super.sendEvent(event) // <== MUST call this!
 	}
 }
 
@@ -19,12 +21,7 @@ internal final class Router {
 	
 	static let shared = Router()
 	
-	var window: UIWindow = {
-		let window = CustomWindow(frame: UIScreen.main.bounds)
-		window.windowLevel = UIWindow.Level.alert + 1
-		
-		return window
-	}()
+	var window: UIWindow?
 	
 	var keyWindow: UIWindow? {
 		return UIApplication.shared.connectedScenes
@@ -36,6 +33,11 @@ internal final class Router {
 	init() { }
 	
 	func setRoot(_ viewController: UIViewController, completion: (() -> Void)? = nil) {
+		
+		guard let window = window else {
+			print("❌ Error: Window is not initialized")
+			return
+		}
 		
 		guard keyWindow != nil, window.rootViewController != nil else {
 			window.rootViewController = viewController
