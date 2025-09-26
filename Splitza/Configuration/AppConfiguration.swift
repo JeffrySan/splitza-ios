@@ -39,7 +39,7 @@ struct AppConfiguration {
 		case .local:
 			return "http://localhost:3000"
 		case .development:
-			return "https://dev-api.splitza.com"
+			return "https://malcom-tariffless-riskily.ngrok-free.dev"
 		case .testing:
 			return "https://test-api.splitza.com"
 		case .staging:
@@ -54,13 +54,13 @@ struct AppConfiguration {
 		case .local:
 			return ""
 		case .development:
-			return "-"
+			return ((Bundle.main.infoDictionary?["SUPABASE_DEV_ANON_KEY"] as? String) ?? "-")
 		case .testing:
 			return "https://test-api.splitza.com"
 		case .staging:
 			return "https://staging-api.splitza.com"
 		case .production:
-			return (Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String) ?? "-"
+			return ((Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String) ?? "-")
 		}
 	}
 }

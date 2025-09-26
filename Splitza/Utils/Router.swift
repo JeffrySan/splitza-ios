@@ -11,9 +11,7 @@ import Foundation
 final class CustomWindow: UIWindow {
 	
 	override func sendEvent(_ event: UIEvent) {
-		// custom logging
-		print("Event: \(event)")
-		super.sendEvent(event) // <== MUST call this!
+		super.sendEvent(event)
 	}
 }
 
