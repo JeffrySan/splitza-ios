@@ -63,4 +63,13 @@ internal final class Router {
 		)
 		completion?()
 	}
+	
+	func push(_ viewController: UIViewController, on coordinator: Coordinator, animated: Bool = true) {
+		
+		guard let navigationController = coordinator.rootViewController as? UINavigationController else {
+			return
+		}
+		
+		navigationController.pushViewController(viewController, animated: animated)
+	}
 }

@@ -22,9 +22,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		let tabbarCoordinator = TabbarCoordinator()
 		tabbarCoordinator.start()
 		
-		navigationController.viewControllers = [tabbarCoordinator.rootViewController]
-		
-		Router.shared.setRoot(tabbarCoordinator)
+		Router.shared.setRoot(tabbarCoordinator.rootViewController)
 	}
 	
 	func sceneDidDisconnect(_ scene: UIScene) {

@@ -10,16 +10,36 @@ import Foundation
 
 final class AppCoordinator: Coordinator {
 	
-	var rootViewController: UIViewController {
-		return UINavigationController()
-	}
+	var rootViewController: UIViewController
+	
+	private var tabbarCoordinator: TabbarCoordinator?
 	
 	init(rootViewController: UIViewController = UINavigationController()) {
 		self.rootViewController = rootViewController
 	}
 	
 	func start() {
-		rootViewController.s
+		
+	}
+	
+	private func showHomePageScreen() {
+		tabbarCoordinator = TabbarCoordinator()
+		
+		guard let unwrappedTabbarCoordinator = tabbarCoordinator else {
+			return
+		}
+		
+		Router.shared.setRoot(unwrappedTabbarCoordinator.rootViewController)
+	}
+	
+	private func showOnboardingPage() {
+		tabbarCoordinator = TabbarCoordinator()
+		
+		guard let unwrappedTabbarCoordinator = tabbarCoordinator else {
+			return
+		}
+		
+		Router.shared.setRoot(unwrappedTabbarCoordinator.rootViewController)
 	}
 }
 
