@@ -18,8 +18,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		
 		guard let windowScene = (scene as? UIWindowScene) else { return }
 		
-		_ = AuthenticationManager.shared
-		
 		// Initialize the window with the scene
 		let window = CustomWindow(windowScene: windowScene)
 		window.windowLevel = .alert + 1
