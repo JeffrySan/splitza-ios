@@ -29,7 +29,7 @@ final class TabbarCoordinator: Coordinator {
 		tabBarController = TabbarViewController()
 	}
 	
-	func start() {
+	@MainActor func start() {
 		
 		setupHistoryViewController()
 		setupScanViewController()
@@ -61,7 +61,7 @@ final class TabbarCoordinator: Coordinator {
 		)
 	}
 	
-	private func setupHistoryViewController() {
+	@MainActor private func setupHistoryViewController() {
 		let localHistoryViewModel = HistoryViewModel()
 		let localHistoryViewController = HistoryViewController(viewModel: localHistoryViewModel)
 		historyViewController = UINavigationController(rootViewController: localHistoryViewController)
