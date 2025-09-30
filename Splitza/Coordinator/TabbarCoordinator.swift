@@ -15,9 +15,9 @@ final class TabbarCoordinator: Coordinator {
 		case showPreLoginPage
 	}
 	
-	private(set) var historyViewController: UIViewController = UIViewController()
-	private(set) var scanViewController: UIViewController = UIViewController()
-	private(set) var profileViewController: UIViewController = UIViewController()
+	private(set) var historyViewController: UIViewController!
+	private(set) var scanViewController: UIViewController!
+	private(set) var profileViewController: UIViewController!
 	
 	var rootViewController: UIViewController {
 		return tabBarController
