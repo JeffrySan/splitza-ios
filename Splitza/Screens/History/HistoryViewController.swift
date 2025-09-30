@@ -15,25 +15,8 @@ final class HistoryViewController: UIViewController {
 	private var cancellables = Set<AnyCancellable>()
 	
 	// MARK: - UI Components
-	private lazy var headerView: HistoryHeaderView = {
-		let view = HistoryHeaderView()
-		view.searchBar.delegate = self
-		return view
-	}()
-	
-	private lazy var tableView: UITableView = {
-		let tableView = UITableView()
-		tableView.backgroundColor = .systemGroupedBackground
-		tableView.separatorStyle = .none
-		tableView.showsVerticalScrollIndicator = false
-		tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 20, right: 0)
-		tableView.delegate = self
-		tableView.dataSource = self
-		tableView.register(SplitBillTableViewCell.self, forCellReuseIdentifier: SplitBillTableViewCell.identifier)
-		tableView.translatesAutoresizingMaskIntoConstraints = false
-		return tableView
-	}()
-	
+	private var headerView: HistoryHeaderView!
+	private var tableView: UITableView!
 	private lazy var emptyStateView: HistoryEmptyStateView = HistoryEmptyStateView()
 	
 	// MARK: - Initialization
@@ -41,21 +24,68 @@ final class HistoryViewController: UIViewController {
 	init(viewModel: HistoryViewModel) {
 		self.viewModel = viewModel
 		super.init(nibName: nil, bundle: nil)
+		
+		Task {
+			await setupHistoryHeaderView()
+			await setupTableView()
+			
+			await MainActor.run {
+				setupUI()
+				observeViewModel()
+			}
+		}
 	}
-	
+
 	required init?(coder: NSCoder) {
 		self.viewModel = HistoryViewModel()
 		super.init(coder: coder)
+		Task {
+			await setupHistoryHeaderView()
+			await setupTableView()
+			
+			await MainActor.run {
+				setupUI()
+				observeViewModel()
+			}
+		}
+	}
+
+	// MARK: - UI Creation
+
+	private func setupHistoryHeaderView() async {
+		Task {
+			let headerView = HistoryHeaderView()
+			headerView.searchBar.delegate = self
+			
+			await MainActor.run {
+				self.headerView = headerView
+			}
+		}
+	}
+	
+	private func setupTableView() async {
+		
+		Task {
+			let tableView = UITableView()
+			tableView.backgroundColor = .systemGroupedBackground
+			tableView.separatorStyle = .none
+			tableView.showsVerticalScrollIndicator = false
+			tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 20, right: 0)
+			tableView.delegate = self
+			tableView.dataSource = self
+			tableView.register(SplitBillTableViewCell.self, forCellReuseIdentifier: SplitBillTableViewCell.identifier)
+			tableView.translatesAutoresizingMaskIntoConstraints = false
+			
+			await MainActor.run {
+				self.tableView = tableView
+			}
+		}
 	}
 	
 	// MARK: - Lifecycle
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		
-		observeViewModel()
-		
-		setupUI()
 		
 		// Load data asynchronously
 //		Task {
