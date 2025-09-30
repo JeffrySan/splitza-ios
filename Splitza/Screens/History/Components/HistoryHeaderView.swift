@@ -11,49 +11,72 @@ final class HistoryHeaderView: UIView {
 	
 	// MARK: - UI Components
 	
-	private let titleLabel: UILabel = UILabel()
-	private let subtitleLabel: UILabel = UILabel()
-	private let searchBar: CustomSearchBar = CustomSearchBar()
+	private var titleLabel: UILabel!
+	private var subtitleLabel: UILabel!
+	var searchBar: CustomSearchBar!
 
 	// MARK: - Initialization
 	
 	override init(frame: CGRect) {
 		super.init(frame: frame)
-		configureViews()
-		setupUI()
+		
+		Task {
+			await configureViews()
+			
+			setupUI()
+		}
 	}
 	
 	required init?(coder: NSCoder) {
 		super.init(coder: coder)
-		configureViews()
-		setupUI()
+		
+		Task {
+			await configureViews()
+			
+			setupUI()
+		}
 	}
 
 	// MARK: - Configure Views
 
-	private func configureViews() {
-		configureTitleLabel()
-		configureSubtitleLabel()
-		configureSearchBar()
+	private func configureViews() async {
+		await configureTitleLabel()
+		await configureSubtitleLabel()
+		await configureSearchBar()
 	}
 
-	private func configureTitleLabel() {
-		titleLabel.text = "Split History"
-		titleLabel.font = .systemFont(ofSize: 32, weight: .bold)
-		titleLabel.textColor = .label
-		titleLabel.translatesAutoresizingMaskIntoConstraints = false
+	private func configureTitleLabel() async {
+		let label = UILabel()
+		label.text = "Split History"
+		label.font = .systemFont(ofSize: 32, weight: .bold)
+		label.textColor = .label
+		label.translatesAutoresizingMaskIntoConstraints = false
+		
+		await MainActor.run {
+			titleLabel = label
+		}
 	}
 
-	private func configureSubtitleLabel() {
-		subtitleLabel.text = "Track all your shared expenses"
-		subtitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
-		subtitleLabel.textColor = .secondaryLabel
-		subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+	private func configureSubtitleLabel() async {
+		let label = UILabel()
+		label.text = "Track all your shared expenses"
+		label.font = .systemFont(ofSize: 16, weight: .medium)
+		label.textColor = .secondaryLabel
+		label.translatesAutoresizingMaskIntoConstraints = false
+		
+		await MainActor.run {
+			subtitleLabel = label
+		}
 	}
 
-	private func configureSearchBar() {
+	private func configureSearchBar() async {
+		let searchBar = CustomSearchBar()
 		searchBar.placeholder = "Search bills, locations, people..."
 		searchBar.translatesAutoresizingMaskIntoConstraints = false
+		
+		await MainActor.run {
+			self.searchBar = searchBar
+		}
 	}
 
 	// MARK: - Setup UI
