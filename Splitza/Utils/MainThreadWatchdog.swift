@@ -10,44 +10,46 @@
 //
 
 import Foundation
+import os.signpost
 
-final class Watchdog: Thread {
-	
+final class Watchdog {
 	static let shared = Watchdog()
 	
 	private let threshold: TimeInterval
-	private var lastPing = Date()
-	private var semaphore = DispatchSemaphore(value: 0)
+	private var timer: DispatchSourceTimer?
+	private var lastLogTime: CFAbsoluteTime = 0
 	
 	init(threshold: TimeInterval = 0.2) {
 		self.threshold = threshold
 	}
 	
-	override func main() {
-		
-		while !isCancelled {
-			
-			DispatchQueue.main.async {  [weak self] in
-				
-				guard let self else {
-					return
+	func start() {
+		let queue = DispatchQueue(label: "com.splitza.watchdog", qos: .background)
+		timer = DispatchSource.makeTimerSource(queue: queue)
+		timer?.schedule(deadline: .now(), repeating: threshold) // Increased interval to 1 second
+		timer?.setEventHandler { [weak self] in
+			self?.checkMainThread()
+		}
+		timer?.resume()
+	}
+	
+	func stop() {
+		timer?.cancel()
+		timer = nil
+	}
+	
+	private func checkMainThread() {
+		let start = CFAbsoluteTimeGetCurrent()
+		DispatchQueue.main.async {
+			let elapsed = CFAbsoluteTimeGetCurrent() - start
+			if elapsed > self.threshold {
+				let now = CFAbsoluteTimeGetCurrent()
+				if now - self.lastLogTime > self.threshold { // Log at most once every 5 seconds
+					self.lastLogTime = now
+					let rounded = String(format: "%.2f", elapsed)
+					print("⚠️ Main thread blocked ~\(rounded)s (threshold: \(self.threshold)s)")
 				}
-				
-				self.semaphore.signal()
-				self.lastPing = Date()
 			}
-			
-			let delta = Date().timeIntervalSince(self.lastPing)
-			
-			// print("[Lala] Watchdog: \(delta)s since last ping")
-			if delta > self.threshold {
-				let rounded = String(format: "%.2f", delta)
-				print("⚠️ Main thread blocked ~\(rounded)s (threshold: \(self.threshold)s)")
-			}
-			
-			Thread.sleep(forTimeInterval: 0.1)
-			
-			_ = semaphore.wait(timeout: .distantFuture)
 		}
 	}
 }
