@@ -22,14 +22,31 @@ class AuthenticationManager {
 	private let disposeBag = DisposeBag()
 	private var currentProvider: Authenticatable?
 	
-	private let userInitiatedQueue = DispatchQueue.global(qos: .userInitiated)
-	
 	private init() {
-		// Initialize with default provider
-		userInitiatedQueue.async { [weak self] in
-			self?.setProvider(.manual)
-			self?.checkStoredAuthState()
+		
+	}
+	
+	func checkStoredAuthState() async {
+		
+		guard let userId = userDefaults.string(forKey: "userId"),
+			  let providerRaw = userDefaults.string(forKey: "authProvider"),
+			  let userObject = userDefaults.data(forKey: "userObject"),
+			  let userSession = userDefaults.data(forKey: "userSession"),
+			  let provider = AuthProvider(rawValue: providerRaw) else {
+			return
 		}
+		
+		setProvider(provider)
+		
+		if let savedSession = try? JSONDecoder().decode(Session.self, from: userSession) {
+			setSession(session: savedSession)
+		}
+		
+		if let savedUser = try? JSONDecoder().decode(User.self, from: userObject) {
+			currentUser.accept(savedUser)
+		}
+		
+		isAuthenticated.accept(!userId.isEmpty)
 	}
 	
 	func setProvider(_ providerType: AuthProvider) {
@@ -139,29 +156,6 @@ class AuthenticationManager {
 		userDefaults.removeObject(forKey: "authProvider")
 		userDefaults.removeObject(forKey: "userObject")
 		userDefaults.removeObject(forKey: "userSession")
-	}
-	
-	private func checkStoredAuthState() {
-		
-		guard let userId = userDefaults.string(forKey: "userId"),
-			  let providerRaw = userDefaults.string(forKey: "authProvider"),
-			  let userObject = userDefaults.data(forKey: "userObject"),
-			  let userSession = userDefaults.data(forKey: "userSession"),
-			  let provider = AuthProvider(rawValue: providerRaw) else {
-			return
-		}
-		
-		setProvider(provider)
-		
-		if let savedSession = try? JSONDecoder().decode(Session.self, from: userSession) {
-			setSession(session: savedSession)
-		}
-		
-		if let savedUser = try? JSONDecoder().decode(User.self, from: userObject) {
-			currentUser.accept(savedUser)
-		}
-		
-		isAuthenticated.accept(!userId.isEmpty)
 	}
 }
 
