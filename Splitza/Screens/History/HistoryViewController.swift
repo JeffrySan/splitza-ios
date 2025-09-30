@@ -53,32 +53,29 @@ final class HistoryViewController: UIViewController {
 	// MARK: - UI Creation
 
 	private func setupHistoryHeaderView() async {
-		Task {
-			let headerView = HistoryHeaderView()
-			headerView.searchBar.delegate = self
-			
-			await MainActor.run {
-				self.headerView = headerView
-			}
+		
+		let headerView = HistoryHeaderView()
+		await headerView.setupHeaderView()
+		
+		await MainActor.run {
+			self.headerView = headerView
+			self.headerView.searchBar.delegate = self
 		}
 	}
 	
 	private func setupTableView() async {
+		let tableView = UITableView()
+		tableView.backgroundColor = .systemGroupedBackground
+		tableView.separatorStyle = .none
+		tableView.showsVerticalScrollIndicator = false
+		tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 20, right: 0)
+		tableView.delegate = self
+		tableView.dataSource = self
+		tableView.register(SplitBillTableViewCell.self, forCellReuseIdentifier: SplitBillTableViewCell.identifier)
+		tableView.translatesAutoresizingMaskIntoConstraints = false
 		
-		Task {
-			let tableView = UITableView()
-			tableView.backgroundColor = .systemGroupedBackground
-			tableView.separatorStyle = .none
-			tableView.showsVerticalScrollIndicator = false
-			tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 20, right: 0)
-			tableView.delegate = self
-			tableView.dataSource = self
-			tableView.register(SplitBillTableViewCell.self, forCellReuseIdentifier: SplitBillTableViewCell.identifier)
-			tableView.translatesAutoresizingMaskIntoConstraints = false
-			
-			await MainActor.run {
-				self.tableView = tableView
-			}
+		await MainActor.run {
+			self.tableView = tableView
 		}
 	}
 	

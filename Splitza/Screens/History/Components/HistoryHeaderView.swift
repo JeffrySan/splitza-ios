@@ -19,22 +19,25 @@ final class HistoryHeaderView: UIView {
 	
 	override init(frame: CGRect) {
 		super.init(frame: frame)
-		
-		Task {
-			await configureViews()
-			
-			setupUI()
-		}
 	}
 	
 	required init?(coder: NSCoder) {
 		super.init(coder: coder)
+	}
+	
+	// MARK: - Public Methods
+	func setupHeaderView() async {
+		await configureViews()
 		
-		Task {
-			await configureViews()
-			
-			setupUI()
-		}
+		setupUI()
+	}
+	
+	func updateTitle(_ title: String) {
+		titleLabel.text = title
+	}
+	
+	func updateSubtitle(_ subtitle: String) {
+		subtitleLabel.text = subtitle
 	}
 
 	// MARK: - Configure Views
@@ -116,15 +119,5 @@ final class HistoryHeaderView: UIView {
 			searchBar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 			searchBar.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16)
 		])
-	}
-	
-	// MARK: - Public Methods
-	
-	func updateTitle(_ title: String) {
-		titleLabel.text = title
-	}
-	
-	func updateSubtitle(_ subtitle: String) {
-		subtitleLabel.text = subtitle
 	}
 }
