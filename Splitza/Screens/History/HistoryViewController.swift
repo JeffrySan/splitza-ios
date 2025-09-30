@@ -122,6 +122,10 @@ final class HistoryViewController: UIViewController {
 		addButton.backgroundColor = .systemBlue
 		addButton.tintColor = .white
 		addButton.layer.cornerRadius = 28
+
+		// Optimize shadow rendering
+		let shadowPath = UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 56, height: 56), cornerRadius: 28)
+		addButton.layer.shadowPath = shadowPath.cgPath
 		addButton.layer.shadowColor = UIColor.black.cgColor
 		addButton.layer.shadowOffset = CGSize(width: 0, height: 2)
 		addButton.layer.shadowRadius = 4
