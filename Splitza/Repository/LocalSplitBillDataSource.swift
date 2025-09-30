@@ -5,7 +5,7 @@
 //  Created by Jeffry Sandy Purnomo on 10/08/25.
 //
 
-import RxSwift
+import Foundation
 
 final class LocalSplitBillDataSource: SplitBillDataSource {
 	
@@ -15,46 +15,45 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		self.manager = manager
 	}
 	
-	func getAllSplitBills() -> Observable<[SplitBill]> {
+	func getAllSplitBills() async throws -> [SplitBill] {
 		let bills = manager.getAllSplitBills()
-		return Observable.just(bills)
+		return bills
 	}
 	
-	func getSplitBill(email: String, name: String) -> Observable<[SplitBill]> {
+	func getSplitBill(email: String, name: String) async throws -> [SplitBill] {
 		let participantBills = manager.getAllSplitBills(email: email, name: name)
 		
 		if participantBills.isEmpty {
-			return Observable.error(NetworkError.noData)
+			throw SplitBillError.splitBillNotFound
 		}
 		
-		return Observable.just(participantBills)
+		return participantBills
 	}
 	
-	func searchSplitBills(query: String) -> Observable<[SplitBill]> {
+	func searchSplitBills(query: String) async throws -> [SplitBill] {
 		let bills = manager.searchSplitBills(query: query)
-		return Observable.just(bills)
+		return bills
 	}
 	
-	func createSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
+	func createSplitBill(_ splitBill: SplitBill) async throws -> SplitBill {
 		manager.addSplitBill(splitBill)
-		return Observable.just(splitBill)
+		return splitBill
 	}
 	
-	func updateSplitBill(_ splitBill: SplitBill) -> Observable<SplitBill> {
+	func updateSplitBill(_ splitBill: SplitBill) async throws -> SplitBill {
 		manager.updateSplitBill(splitBill)
-		return Observable.just(splitBill)
+		return splitBill
 	}
 	
-	func deleteSplitBill(id: String) -> Observable<Void> {
+	func deleteSplitBill(id: String) async throws {
 		manager.deleteSplitBill(withId: id)
-		return Observable.just(())
 	}
 	
-	func settleSplitBill(id: String) -> Observable<SplitBill> {
+	func settleSplitBill(id: String) async throws -> SplitBill {
 		let bills = manager.getAllSplitBills()
 		
 		guard let bill = bills.first(where: { $0.id == id }) else {
-			return Observable.error(SplitBillRepositoryError.splitBillNotFound)
+			throw SplitBillError.splitBillNotFound
 		}
 		
 		// Create a new SplitBill with isSettled = true
@@ -79,25 +78,24 @@ final class LocalSplitBillDataSource: SplitBillDataSource {
 		)
 		
 		manager.updateSplitBill(settledBill)
-		
-		return Observable.just(settledBill)
+		return settledBill
 	}
 	
 	// MARK: - User-specific queries
 	
-	func getSplitBillsForUser(email: String) -> Observable<[SplitBill]> {
+	func getSplitBillsForUser(email: String) async throws -> [SplitBill] {
 		let allBills = manager.getAllSplitBills()
 		let userBills = allBills.filter { bill in
 			bill.participants.contains { $0.email?.lowercased() == email.lowercased() }
 		}
-		return Observable.just(userBills)
+		return userBills
 	}
 	
-	func getSplitBillsForUser(name: String) -> Observable<[SplitBill]> {
+	func getSplitBillsForUser(name: String) async throws -> [SplitBill] {
 		let allBills = manager.getAllSplitBills()
 		let userBills = allBills.filter { bill in
 			bill.participants.contains { $0.name.lowercased().contains(name.lowercased()) }
 		}
-		return Observable.just(userBills)
+		return userBills
 	}
 }

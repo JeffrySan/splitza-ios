@@ -6,13 +6,13 @@
 //
 
 import UIKit
-import RxSwift
-import RxRelay
+import Combine
 
 final class HistoryViewController: UIViewController {
 	
 	// MARK: - Properties
 	private let viewModel: HistoryViewModel
+	private var cancellables = Set<AnyCancellable>()
 	
 	// MARK: - UI Components
 	private lazy var headerView: HistoryHeaderView = {
@@ -57,7 +57,10 @@ final class HistoryViewController: UIViewController {
 		
 		setupUI()
 		
-//		viewModel.loadData()
+		// Load data asynchronously
+//		Task {
+//			await viewModel.loadData()
+//		}
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {
@@ -135,40 +138,28 @@ final class HistoryViewController: UIViewController {
 	}
 	
 	private func observeDataSourceChanges() {
-		lazy var allSplitBillObservable = viewModel.splitBillsRelay
-			.asObservable()
-			.distinctUntilChanged()
-		
-		lazy var filteredSplitBillsObservable = viewModel.filteredSplitBillsRelay
-			.asObservable()
-			.distinctUntilChanged()
-		
-		viewModel.isSearchingRelay
-			.asObservable()
-			.distinctUntilChanged()
-			.map { isSearchingState -> Observable<[SplitBill]> in
-				return isSearchingState ? filteredSplitBillsObservable : allSplitBillObservable
-			}
-			.observe(on: MainScheduler.instance)
-			.subscribe(onNext: { [weak self] _ in
+		// Observe split bills changes
+		viewModel.$splitBills
+			.combineLatest(viewModel.$filteredSplitBills, viewModel.$isSearching)
+			.receive(on: DispatchQueue.main)
+			.sink { [weak self] _, _, _ in
 				self?.updateUI()
-			})
-			.disposed(by: viewModel.disposeBag)
+			}
+			.store(in: &cancellables)
 	}
 	
 	private func observeViewStateChanges() {
-		viewModel.viewStateRelay
-			.observe(on: MainScheduler.instance)
-			.subscribe(onNext: { [weak self] viewState in
-				
+		viewModel.$viewState
+			.receive(on: DispatchQueue.main)
+			.sink { [weak self] viewState in
 				if case .error(let error) = viewState {
 					self?.showErrorAlert(error: error)
 					return
 				}
 				
 				self?.updateUI()
-			})
-			.disposed(by: viewModel.disposeBag)
+			}
+			.store(in: &cancellables)
 	}
 	
 	// MARK: - Setup UI Components
@@ -384,7 +375,9 @@ extension HistoryViewController: UITableViewDelegate {
 		})
 		
 		alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
-			self?.viewModel.deleteSplitBill(at: indexPath.row)
+			Task {
+				await self?.viewModel.deleteSplitBill(at: indexPath.row)
+			}
 			completion(true)
 		})
 		
@@ -408,7 +401,9 @@ extension HistoryViewController: UITableViewDelegate {
 		})
 		
 		alert.addAction(UIAlertAction(title: "Settle", style: .default) { [weak self] _ in
-			self?.viewModel.settleSplitBill(at: indexPath.row)
+			Task {
+				await self?.viewModel.settleSplitBill(at: indexPath.row)
+			}
 			completion(true)
 		})
 		
@@ -463,7 +458,9 @@ extension HistoryViewController: CustomSearchBarDelegate {
 		
 		alert.addAction(UIAlertAction(title: "OK", style: .default))
 		alert.addAction(UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
-			self?.viewModel.loadData()
+			Task {
+				await self?.viewModel.loadData()
+			}
 		})
 		
 		present(alert, animated: true)

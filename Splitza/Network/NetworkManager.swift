@@ -175,6 +175,8 @@ final class NetworkManager {
 
 extension NetworkManager {
 	
+	// MARK: - RxSwift Methods (Legacy)
+	
 	func get<T: Codable>(
 		path: String,
 		parameters: [String: Any]? = nil,
@@ -253,6 +255,108 @@ extension NetworkManager {
 		)
 		
 		return execute(request: request, responseType: responseType)
+	}
+	
+	// MARK: - Async/Await Methods
+	
+	func get<T: Codable>(
+		path: String,
+		parameters: [String: Any]? = nil,
+		headers: [String: String]? = nil,
+		responseType: T.Type
+	) async throws -> T {
+		
+		let request = GenericNetworkRequest(
+			path: path,
+			method: .GET,
+			headers: headers,
+			parameters: parameters
+		)
+		
+		return try await executeAsync(request: request, responseType: responseType)
+	}
+	
+	func post<T: Codable, Body: Encodable>(
+		path: String,
+		body: Body? = nil,
+		headers: [String: String]? = nil,
+		responseType: T.Type
+	) async throws -> T {
+		
+		let bodyData: Data?
+		if let body = body {
+			bodyData = try? encoder.encode(body)
+		} else {
+			bodyData = nil
+		}
+		
+		let request = GenericNetworkRequest(
+			path: path,
+			method: .POST,
+			headers: headers,
+			body: bodyData
+		)
+		
+		return try await executeAsync(request: request, responseType: responseType)
+	}
+	
+	func put<T: Codable, Body: Encodable>(
+		path: String,
+		body: Body? = nil,
+		headers: [String: String]? = nil,
+		responseType: T.Type
+	) async throws -> T {
+		
+		let bodyData: Data?
+		if let body = body {
+			bodyData = try? encoder.encode(body)
+		} else {
+			bodyData = nil
+		}
+		
+		let request = GenericNetworkRequest(
+			path: path,
+			method: .PUT,
+			headers: headers,
+			body: bodyData
+		)
+		
+		return try await executeAsync(request: request, responseType: responseType)
+	}
+	
+	func delete<T: Codable>(
+		path: String,
+		headers: [String: String]? = nil,
+		responseType: T.Type
+	) async throws -> T {
+		
+		let request = GenericNetworkRequest(
+			path: path,
+			method: .DELETE,
+			headers: headers
+		)
+		
+		return try await executeAsync(request: request, responseType: responseType)
+	}
+	
+	// MARK: - Private Async Helper
+	
+	private func executeAsync<T: Codable>(
+		request: NetworkRequest,
+		responseType: T.Type
+	) async throws -> T {
+		
+		guard let urlRequest = buildURLRequest(from: request) else {
+			throw NetworkError.invalidURL
+		}
+		
+		do {
+			let (data, response) = try await session.data(for: urlRequest)
+			let validatedData = try handleResponse(data: data, response: response)
+			return try decoder.decode(responseType, from: validatedData)
+		} catch {
+			throw mapError(error)
+		}
 	}
 }
 
