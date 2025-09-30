@@ -7,6 +7,7 @@
 
 import UIKit
 import Foundation
+import RxSwift
 
 final class AppCoordinator: Coordinator {
 	
@@ -14,6 +15,7 @@ final class AppCoordinator: Coordinator {
 	
 	private var tabbarCoordinator: TabbarCoordinator?
 	private var preLoginCoordinator: PreLoginCoordinator?
+	private let disposeBag = DisposeBag()
 	
 	init(rootViewController: UIViewController = UINavigationController()) {
 		self.rootViewController = rootViewController
@@ -21,15 +23,25 @@ final class AppCoordinator: Coordinator {
 	
 	func start() {
 		
-		if AuthenticationManager.shared.isAuthenticated.value {
-			showHomePageScreen()
-			return
+		Task { @MainActor [weak self] in
+			
+			guard let self else {
+				return
+			}
+			
+			_ = await AuthenticationManager.shared.checkStoredAuthState()
+			
+			if AuthenticationManager.shared.isAuthenticated.value {
+				self.showHomePageScreen()
+				return
+			}
+			
+			self.showPreloginPage()
 		}
-		
-		showPreloginPage()
 	}
 	
-	private func showHomePageScreen() {
+	@MainActor private func showHomePageScreen() {
+		
 		tabbarCoordinator = TabbarCoordinator()
 		tabbarCoordinator?.start()
 		
@@ -47,7 +59,8 @@ final class AppCoordinator: Coordinator {
 		Router.shared.setRoot(unwrappedTabbarCoordinator.rootViewController)
 	}
 	
-	private func showPreloginPage() {
+	@MainActor private func showPreloginPage() {
+		
 		preLoginCoordinator = PreLoginCoordinator()
 		preLoginCoordinator?.start()
 		
