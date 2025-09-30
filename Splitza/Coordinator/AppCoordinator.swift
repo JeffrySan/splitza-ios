@@ -7,7 +7,6 @@
 
 import UIKit
 import Foundation
-import RxSwift
 
 final class AppCoordinator: Coordinator {
 	
@@ -15,7 +14,6 @@ final class AppCoordinator: Coordinator {
 	
 	private var tabbarCoordinator: TabbarCoordinator?
 	private var preLoginCoordinator: PreLoginCoordinator?
-	private let disposeBag = DisposeBag()
 	
 	init(rootViewController: UIViewController = UINavigationController()) {
 		self.rootViewController = rootViewController
