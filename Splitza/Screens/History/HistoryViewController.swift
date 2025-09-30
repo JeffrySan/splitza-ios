@@ -32,6 +32,7 @@ final class HistoryViewController: UIViewController {
 			await MainActor.run {
 				setupUI()
 				observeViewModel()
+				setupFloatingActionButton()
 			}
 		}
 	}
@@ -46,6 +47,7 @@ final class HistoryViewController: UIViewController {
 			await MainActor.run {
 				setupUI()
 				observeViewModel()
+				setupFloatingActionButton()
 			}
 		}
 	}
@@ -110,10 +112,6 @@ final class HistoryViewController: UIViewController {
 			action: #selector(addButtonTapped)
 		)
 		addButton.tintColor = .systemBlue
-		
-		// You can add this to a navigation controller if needed
-		// For now, we'll add it as a floating action button
-		setupFloatingActionButton()
 	}
 	
 	private func setupFloatingActionButton() {
