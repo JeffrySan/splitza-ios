@@ -41,15 +41,21 @@ final class AddBillViewModel {
 	var selectedParticipant: BehaviorRelay<BillParticipant>!
 	
 	private let splitBillRepository: SplitBillRepositoryProtocol
+	private let authenticationManager: AuthenticationManager
 	
 	// MARK: - Initialization
-	init(splitBillRepository: SplitBillRepositoryProtocol = SplitBillRepository(dataSourceType: .remote)) {
+	init(
+		splitBillRepository: SplitBillRepositoryProtocol = SplitBillRepository(dataSourceType: .remote),
+		authenticationManager: AuthenticationManager = .shared
+	) {
 		self.splitBillRepository = splitBillRepository
+		self.authenticationManager = authenticationManager
 		
 		// Add default "Me" participant
 		let defaultParticipant = BillParticipant(
+			id: (authenticationManager.currentUser.value?.id ?? "placeholder-\(UUID().uuidString)"),
 			name: "Me",
-			email: ""
+			email: (authenticationManager.currentUser.value?.email ?? "placeholder-email-\(UUID().uuidString)")
 		)
 		selectedParticipant = .init(value: defaultParticipant)
 		participantsRelay.accept([defaultParticipant])

@@ -31,7 +31,7 @@ final class MenuItemCell: UITableViewCell {
 	private var disposeBag = DisposeBag()
 	private var menuItem: MenuItem!
 	private var participants: [BillParticipant] = []
-	private var currency: String = "USD"
+	private var currency: String = "IDR"
 	private var viewModel: AddBillViewModel!
 	
 	private var assignedParticipants: [BillParticipant] {

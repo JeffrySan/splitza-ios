@@ -24,7 +24,7 @@ struct SplitBill: Codable, Equatable {
 		 date: Date = Date(),
 		 location: String? = nil,
 		 participants: [Participant],
-		 currency: String = "USD",
+		 currency: String = "IDR",
 		 description: String? = nil,
 		 isSettled: Bool = false) {
 		self.id = id
