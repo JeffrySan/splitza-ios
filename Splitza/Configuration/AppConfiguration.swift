@@ -41,7 +41,7 @@ struct AppConfiguration {
 		case .development:
 			return "https://malcom-tariffless-riskily.ngrok-free.dev"
 		case .testing:
-			return "https://test-api.splitza.com"
+			return "https://snelzienvcjsncoxjgok.supabase.co"
 		case .staging:
 			return "https://staging-api.splitza.com"
 		case .production:
@@ -56,7 +56,7 @@ struct AppConfiguration {
 		case .development:
 			return ((Bundle.main.infoDictionary?["SUPABASE_DEV_ANON_KEY"] as? String) ?? "-")
 		case .testing:
-			return "https://test-api.splitza.com"
+			return ((Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String) ?? "-")
 		case .staging:
 			return "https://staging-api.splitza.com"
 		case .production:

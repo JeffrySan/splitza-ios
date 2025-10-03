@@ -28,9 +28,7 @@ final class LoginViewModel {
 		
 		if case .success = signInResult {
 			showPopupMessage?("Sign In Success!", "")
-			print("[Lala] 7")
 			DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-				print("Navigating!")
 				self?.onNavigationEvent?(.showHomePageScreen)
 			}
 			return
@@ -47,7 +45,6 @@ final class LoginViewModel {
 		if case .success = signUpResult {
 			showPopupMessage?("Sign Up Success!", "")
 			DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-				print("[Lala] 6")
 				self?.onNavigationEvent?(.showHomePageScreen)
 			}
 			return

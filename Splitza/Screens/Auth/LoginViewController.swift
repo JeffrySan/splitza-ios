@@ -36,6 +36,7 @@ final class LoginViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		setupViews()
+		viewModel.setProvider(.manual)
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {

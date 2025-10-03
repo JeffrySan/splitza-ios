@@ -33,6 +33,7 @@ class AuthenticationManager {
 			  let userObject = userDefaults.data(forKey: "userObject"),
 			  let userSession = userDefaults.data(forKey: "userSession"),
 			  let provider = AuthProvider(rawValue: providerRaw) else {
+			setProvider(.manual)
 			return
 		}
 		
