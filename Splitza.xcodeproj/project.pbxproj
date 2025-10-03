@@ -29,6 +29,7 @@
 		7C05CA362E1E15E100F2D1E2 /* Splitza.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Splitza.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C05CA712E1E1A5200F2D1E2 /* RxSwift.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxSwift.xcframework; path = Carthage/Build/RxSwift.xcframework; sourceTree = "<group>"; };
 		7C162CF82E8FCB6600699323 /* SplitzaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SplitzaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C162D032E8FDB1A00699323 /* Splitza-UITests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Splitza-UITests.xctestplan"; sourceTree = "<group>"; };
 		7C749E312E486C7900E0EB32 /* RxCocoa.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxCocoa.xcframework; path = Carthage/Build/RxCocoa.xcframework; sourceTree = "<group>"; };
 		7C749E352E48716B00E0EB32 /* RxRelay.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RxRelay.xcframework; path = Carthage/Build/RxRelay.xcframework; sourceTree = "<group>"; };
 		7C87630C2E868CA4001A2517 /* Secret.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secret.xcconfig; sourceTree = "<group>"; };
@@ -88,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				7C87630C2E868CA4001A2517 /* Secret.xcconfig */,
+				7C162D032E8FDB1A00699323 /* Splitza-UITests.xctestplan */,
 				7C05CA382E1E15E100F2D1E2 /* Splitza */,
 				7C162CF92E8FCB6600699323 /* SplitzaUITests */,
 				7C05CA702E1E1A5100F2D1E2 /* Frameworks */,

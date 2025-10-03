@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "5AB22B1D-9621-44DF-98BF-D6CEDA09B58D",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "skippedTests" : [
+        "SplitzaUITestsLaunchTests",
+        "SplitzaUITestsLaunchTests\/testLaunch()"
+      ],
+      "target" : {
+        "containerPath" : "container:Splitza.xcodeproj",
+        "identifier" : "7C162CF72E8FCB6600699323",
+        "name" : "SplitzaUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

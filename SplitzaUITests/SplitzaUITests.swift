@@ -14,11 +14,17 @@ final class SplitzaUITests: XCTestCase {
 	}
 	
 	@MainActor
-	func testExample() throws {
+	func testLoginScenario() throws {
 		let app = XCUIApplication()
 		app.launchEnvironment["ENVIRONMENT"] = "testing"
 		app.launch()
 		
+		doLoginScenario(app: app)
+		doLogoutScenario(app: app)
+	}
+	
+	@MainActor
+	func doLoginScenario(app: XCUIApplication) {
 		let elementsQuery = XCUIApplication().scrollViews.otherElements
 		let emailTextField = elementsQuery.textFields["Email"]
 		emailTextField.tap()
@@ -32,6 +38,21 @@ final class SplitzaUITests: XCTestCase {
 		logInButton.tap()
 		
 		let message = app.staticTexts["Split History"]
+		XCTAssertTrue(message.waitForExistence(timeout: 5))
+	}
+	
+	@MainActor
+	func doLogoutScenario(app: XCUIApplication) {
+		let profileTabbar = app.buttons["Profile"]
+		profileTabbar.tap()
+		
+		let logoutButton = app.buttons["btn-logout"]
+		logoutButton.tap()
+		
+		let alertLogout = app.buttons["alert-logout"]
+		alertLogout.tap()
+		
+		let message = app.staticTexts["Welcome to Splitza"]
 		XCTAssertTrue(message.waitForExistence(timeout: 5))
 	}
 	

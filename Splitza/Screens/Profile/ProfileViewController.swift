@@ -150,6 +150,7 @@ final class ProfileViewController: UIViewController {
 		logoutButton.layer.shadowOffset = CGSize(width: 0, height: 1)
 		logoutButton.layer.shadowRadius = 3
 		logoutButton.layer.shadowOpacity = 0.1
+		logoutButton.accessibilityIdentifier = "btn-logout"
 	}
 	
 	private func configureProfileStackView() {
@@ -315,10 +316,16 @@ final class ProfileViewController: UIViewController {
 			preferredStyle: .alert
 		)
 		
-		alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-		alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
+		let cancelAlert = UIAlertAction(title: "Cancel", style: .cancel)
+		cancelAlert.accessibilityIdentifier = "alert-cancel"
+		
+		let logoutAlert = UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
 			self?.viewModel.logout()
-		})
+		}
+		logoutAlert.accessibilityIdentifier = "alert-logout"
+		
+		alert.addAction(cancelAlert)
+		alert.addAction(logoutAlert)
 		
 		present(alert, animated: true)
 	}
