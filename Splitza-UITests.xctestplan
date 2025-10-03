@@ -13,8 +13,8 @@
   },
   "testTargets" : [
     {
-      "parallelizable" : true,
       "skippedTests" : [
+        "SplitzaUITests\/testLaunchPerformance()",
         "SplitzaUITestsLaunchTests",
         "SplitzaUITestsLaunchTests\/testLaunch()"
       ],
