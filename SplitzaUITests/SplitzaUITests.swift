@@ -16,10 +16,27 @@ final class SplitzaUITests: XCTestCase {
 	@MainActor
 	func testLoginScenario() throws {
 		let app = XCUIApplication()
-		app.launchEnvironment["ENVIRONMENT"] = "testing"
+		app.launchEnvironment["ENVIRONMENT"] = "production"
 		app.launch()
 		
 		doLoginScenario(app: app)
+	}
+	
+	func testLaunchAppOnlyScenario() throws {
+		let app = XCUIApplication()
+		app.launchEnvironment["ENVIRONMENT"] = "production"
+		app.launch()
+		
+		let message = app.otherElements["app-ready-tracked"]
+		XCTAssertTrue(message.waitForExistence(timeout: 10))
+	}
+	
+	@MainActor
+	func testsLogoutScenario() throws {
+		let app = XCUIApplication()
+		app.launchEnvironment["ENVIRONMENT"] = "production"
+		app.launch()
+		
 		doLogoutScenario(app: app)
 	}
 	
@@ -64,5 +81,15 @@ final class SplitzaUITests: XCTestCase {
 				XCUIApplication().launch()
 			}
 		}
+	}
+}
+
+extension XCTestCase {
+	func waitFor(seconds: TimeInterval) {
+		let expectation = XCTestExpectation(description: "Wait for \(seconds) seconds")
+		DispatchQueue.global().asyncAfter(deadline: .now() + seconds) {
+			expectation.fulfill()
+		}
+		_ = XCTWaiter.wait(for: [expectation], timeout: seconds + 1)
 	}
 }

@@ -86,6 +86,10 @@ final class HistoryViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
+		DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+			self?.addAndRemoveInvisibleUI()
+		}
+		
 		// Load data asynchronously
 //		Task {
 //			await viewModel.loadData()
@@ -493,5 +497,21 @@ extension HistoryViewController: CustomSearchBarDelegate {
 		})
 		
 		present(alert, animated: true)
+	}
+	
+	private func addAndRemoveInvisibleUI() {
+		// Create an invisible view
+		let invisibleView = UIView()
+		invisibleView.frame.size = CGSize(width: 1, height: 1)
+		invisibleView.frame.origin = CGPoint(x: 0, y: 0)
+		invisibleView.backgroundColor = .clear
+		
+		invisibleView.accessibilityIdentifier = "app-ready-tracked"
+		view.addSubview(invisibleView)
+
+		// Wait for 3 seconds and then remove the view
+		DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+			invisibleView.removeFromSuperview()
+		}
 	}
 }
