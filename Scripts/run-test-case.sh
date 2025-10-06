@@ -6,13 +6,11 @@ echo "Current directory: $(pwd)"
 echo "Running UI Tests..."
 
 # Set result bundle path with timestamp
+OUTPUT_FOLDER="$1"
+echo "Provided output folder: $OUTPUT_FOLDER" >&2
+
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-RESULT_BUNDLE="./test-results/TestResults_${TIMESTAMP}.xcresult"
-
-# Create test-results directory if it doesn't exist
-mkdir -p ./test-results
-
-echo "Test results will be saved to: $RESULT_BUNDLE"
+RESULT_BUNDLE="$OUTPUT_FOLDER/TestResults_${TIMESTAMP}.xcresult"
 
 # Run the test with explicit result bundle path
 xcodebuild test \
@@ -62,3 +60,7 @@ ls -t TestResults_*.xcresult | tail -n +6 | xargs rm -rf 2>/dev/null || true
 cd ..
 
 echo "Script completed."
+
+echo "status=Success"
+echo "path=/some path"
+echo "count=42"

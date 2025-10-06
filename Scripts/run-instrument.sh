@@ -18,6 +18,7 @@ APP_DERIVED_DATA="$(find ~/Library/Developer/Xcode/DerivedData/Splitza-**/Build/
 APP_PATH="$(find $APP_DERIVED_DATA -name "*Splitza.app" -print | head -n 1)"
 DSYM_PATH="$(find $APP_DERIVED_DATA -name '*Splitza.*.dSYM' -print | head -n 1)"
 TRACE_OUTPUT="$OUTPUT_FOLDER/Splitza.trace"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"
 
 # Debugging information
 # Get relative paths (trimmed for readability)
@@ -44,12 +45,27 @@ if [ -d "$OUTPUT_FOLDER" ]; then
 fi
 mkdir -p "$OUTPUT_FOLDER"
 
+RESULT=$("$SCRIPT_DIR/run-test-case.sh" "$OUTPUT_FOLDER")
+
+# Parse line-by-line
+while IFS='=' read -r key value; do
+  case "$key" in
+    status) STATUS="$value" ;;
+    path) PATH="$value" ;;
+    count) COUNT="$value" ;;
+  esac
+done <<< "$RESULT"
+
+echo "Status 1: $STATUS"
+echo "Path 2 : $PATH"
+echo "Count 3: $COUNT"
+
+exit 0
+
 if [ -z "$APP_PATH" ]; then
   echo -e "${BOLD}${RED}Error:${NC} No built app found. Please run ./run-test-case.sh first."
   exit 1
 fi
-
-echo -e ""
 
 # Launch xctrace with the System Trace template and specified options
 xctrace record \
